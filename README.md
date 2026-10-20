@@ -1,10 +1,10 @@
 # Bluetooth HID Remote for Android
 
-[![Stars](https://img.shields.io/github/stars/jqssun/android-bt-remote?label=stars&logo=GitHub)](https://github.com/jqssun/android-bt-remote)
-[![GitHub](https://img.shields.io/github/downloads/jqssun/android-bt-remote/total?label=GitHub&logo=GitHub)](https://github.com/jqssun/android-bt-remote/releases)
+[![Stars](https://img.shields.io/github/stars/liuqianhe/android-bt-remote-ink?label=stars&logo=GitHub)](https://github.com/liuqianhe/android-bt-remote-ink)
+[![GitHub](https://img.shields.io/github/downloads/liuqianhe/android-bt-remote-ink/total?label=GitHub&logo=GitHub)](https://github.com/liuqianhe/android-bt-remote-ink/releases)
 [![license](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![build](https://img.shields.io/github/actions/workflow/status/jqssun/android-bt-remote/apk.yml?label=build)](https://github.com/jqssun/android-bt-remote/actions/workflows/apk.yml)
-[![release](https://img.shields.io/github/v/release/jqssun/android-bt-remote)](https://github.com/jqssun/android-bt-remote/releases)
+[![build](https://img.shields.io/github/actions/workflow/status/liuqianhe/android-bt-remote-ink/apk.yml?label=build)](https://github.com/liuqianhe/android-bt-remote-ink/actions/workflows/apk.yml)
+[![release](https://img.shields.io/github/v/release/liuqianhe/android-bt-remote-ink)](https://github.com/liuqianhe/android-bt-remote-ink/releases)
 
 **Remote** turns any Android device into a Bluetooth (Classic) HID keyboard, mouse, and trackpad designed for all platforms that accept generic Bluetooth input. 
 
@@ -35,17 +35,53 @@ Unlike network remote-control tools, this does not require a companion applicati
 
 ## Implementation
 
-**Remote** registers with Android's `BluetoothHidDevice` profile and sends HID reports for keyboard, mouse, and remote control actions. This build uses the upstream project as a submodule in [`src`](src) with additional modifications in [`patches`](patches).
+**Remote** registers with Android's `BluetoothHidDevice` profile and sends HID reports for keyboard, mouse, and remote control actions.
+
+This fork is a self-contained Android project. It does not use a Git submodule and does not apply patches at build time. Upstream source was imported directly into `app/`, then extended with the customizations below. The historical pre-refactor patches are archived under [`docs/archive/patches`](docs/archive/patches) and are not part of the build.
+
+## Build
+
+Requirements: JDK 21 and Android SDK. Open the repository root in Android Studio, or use the Gradle wrapper directly.
 
 ```shell
-git submodule update --init --recursive
-./build.sh
-cd src
 ./gradlew assembleDefaultDebug
+./gradlew assembleDefaultRelease
 ```
 
-Check out the [CI](.github/workflows/apk.yml) for more details on reproducible builds.
+Release signing is read from `local.properties`, which must stay outside Git:
+
+```properties
+storeFile=D:/path/to/btremote-release.jks
+storePassword=...
+keyAlias=btremote
+keyPassword=...
+sdk.dir=C:/Paths/Android_Path
+```
+
+Debug build:
+
+```shell
+app/build/outputs/apk/default/debug/app-default-debug.apk
+```
+
+Signed Release build:
+
+```shell
+app/build/outputs/apk/default/release/app-default-release.apk
+```
+
+Check out the [CI](.github/workflows/apk.yml) for the GitHub Actions release flow.
+
+## Customizations
+
+- E-ink theme: pure white background, black foreground, outlined cards.
+- Full-screen numeric keypad: HID Keypad layout, draggable position, normal/ink styles.
+- Full-screen mouse: trackpad, scroll wheel, three buttons, normal/ink styles.
+- Inline bottom navigation: switch between direction pad and mouse from the overflow menu.
+- Direct Input keyboard mode: maps Android key events to HID usages.
+- Release signing through `local.properties`; keystores are never committed.
 
 ## Credits
 
 - [Atharok](https://gitlab.com/Atharok/BtRemote) for the original BT Remote
+- [jqssun](https://github.com/jqssun/android-bt-remote) for the multi-platform HID fork
