@@ -1,0 +1,764 @@
+From d19ee12322504c21b257dd4003fe6b571b7aec84 Mon Sep 17 00:00:00 2001
+From: liuqianhe <62452526+liuqianhe@users.noreply.github.com>
+Date: Tue, 20 Oct 2026 21:25:59 +0800
+Subject: [PATCH] =?UTF-8?q?=E6=96=B0=E5=A2=9E=E9=BC=A0=E6=A0=87=E5=A2=A8?=
+ =?UTF-8?q?=E6=B0=B4=E6=A0=B7=E5=BC=8F=E5=92=8C=E9=A1=B6=E6=A0=8F=E5=B0=8F?=
+ =?UTF-8?q?=E9=94=AE=E7=9B=98=E5=85=A5=E5=8F=A3?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 鼠标独立界面支持正常/墨水屏样式切换
+- 墨水样式使用白底黑边、按键反色高亮
+- 样式切换并入鼠标界面标题栏
+- 顶栏新增小键盘入口，保留溢出菜单入口
+- 抽取共享的对话框样式切换组件
+---
+ .../ui/components/DialogInkStyleToggle.kt     |  83 ++++++
+ .../btremote/ui/screens/RemoteScreen.kt       |   6 +
+ .../ui/views/keyboard/NumpadDialog.kt         |  68 +----
+ .../btremote/ui/views/mouse/MouseDialog.kt    |  24 +-
+ .../btremote/ui/views/mouse/MousePad.kt       |  31 +-
+ .../btremote/ui/views/mouse/MousePadLayout.kt | 276 +++++++++++++++---
+ 6 files changed, 375 insertions(+), 113 deletions(-)
+ create mode 100644 app/src/main/java/com/atharok/btremote/ui/components/DialogInkStyleToggle.kt
+
+diff --git a/app/src/main/java/com/atharok/btremote/ui/components/DialogInkStyleToggle.kt b/app/src/main/java/com/atharok/btremote/ui/components/DialogInkStyleToggle.kt
+new file mode 100644
+index 0000000..3361417
+--- /dev/null
++++ b/app/src/main/java/com/atharok/btremote/ui/components/DialogInkStyleToggle.kt
+@@ -0,0 +1,83 @@
++package com.atharok.btremote.ui.components
++
++import androidx.compose.foundation.background
++import androidx.compose.foundation.border
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.unit.dp
++import com.atharok.btremote.R
++
++@Composable
++internal fun DialogInkStyleToggle(
++    inkStyle: Boolean,
++    onInkStyleChange: (Boolean) -> Unit,
++    modifier: Modifier = Modifier
++) {
++    Row(
++        modifier = modifier,
++        horizontalArrangement = Arrangement.spacedBy(4.dp),
++        verticalAlignment = Alignment.CenterVertically
++    ) {
++        DialogInkStyleToggleItem(
++            text = stringResource(id = R.string.numpad_style_normal),
++            selected = !inkStyle,
++            inkStyle = inkStyle,
++            onClick = { onInkStyleChange(false) }
++        )
++        DialogInkStyleToggleItem(
++            text = stringResource(id = R.string.numpad_style_ink),
++            selected = inkStyle,
++            inkStyle = inkStyle,
++            onClick = { onInkStyleChange(true) }
++        )
++    }
++}
++
++@Composable
++private fun DialogInkStyleToggleItem(
++    text: String,
++    selected: Boolean,
++    inkStyle: Boolean,
++    onClick: () -> Unit
++) {
++    val shape = RoundedCornerShape(50)
++    val containerColor = when {
++        selected && inkStyle -> Color.Black
++        selected -> MaterialTheme.colorScheme.primary
++        inkStyle -> Color.White
++        else -> Color.Transparent
++    }
++    val contentColor = when {
++        selected && inkStyle -> Color.White
++        selected -> MaterialTheme.colorScheme.onPrimary
++        inkStyle -> Color.Black
++        else -> MaterialTheme.colorScheme.onSurface
++    }
++    val borderColor = if (inkStyle) Color.Black else MaterialTheme.colorScheme.outline
++
++    Box(
++        modifier = Modifier
++            .clip(shape)
++            .background(containerColor)
++            .border(1.dp, borderColor, shape)
++            .clickable(onClick = onClick)
++            .padding(horizontal = 10.dp, vertical = 4.dp),
++        contentAlignment = Alignment.Center
++    ) {
++        TextNormal(
++            text = text,
++            color = contentColor
++        )
++    }
++}
+diff --git a/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt b/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
+index 43b479a..d64e31b 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
+@@ -479,6 +479,12 @@ private fun TopBarActions(
+     isHelpBottomSheetVisible: Boolean,
+     onHelpBottomSheetVisibleChanged: (Boolean) -> Unit
+ ) {
++    BasicIconButton(
++        onClick = { onNumpadVisibleChanged(!isNumpadVisible) },
++        icon = AppIcons.Numpad,
++        contentDescription = stringResource(id = R.string.numeric_keypad)
++    )
++
+     BasicIconButton(
+         onClick = onMouseClick,
+         icon = AppIcons.Mouse,
+diff --git a/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt b/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt
+index a802887..e4c5120 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt
+@@ -2,7 +2,6 @@ package com.atharok.btremote.ui.views.keyboard
+ 
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.border
+-import androidx.compose.foundation.clickable
+ import androidx.compose.foundation.gestures.detectDragGestures
+ import androidx.compose.foundation.layout.Arrangement
+ import androidx.compose.foundation.layout.Box
+@@ -49,6 +48,7 @@ import com.atharok.btremote.common.utils.AppIcons
+ import com.atharok.btremote.common.utils.REMOTE_INPUT_NONE
+ import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardKey
+ import com.atharok.btremote.ui.components.AdaptiveText
++import com.atharok.btremote.ui.components.DialogInkStyleToggle
+ import com.atharok.btremote.ui.components.DialogSystemBarAppearance
+ import com.atharok.btremote.ui.components.TextMedium
+ import com.atharok.btremote.ui.components.TextNormal
+@@ -118,7 +118,7 @@ fun NumpadDialog(
+                     modifier = Modifier.fillMaxWidth(),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+-                    NumpadStyleToggle(
++                    DialogInkStyleToggle(
+                         inkStyle = useInkStyle,
+                         onInkStyleChange = { useInkStyle = it }
+                     )
+@@ -223,70 +223,6 @@ private fun NumpadDragArea(
+     ) { }
+ }
+ 
+-@Composable
+-private fun NumpadStyleToggle(
+-    inkStyle: Boolean,
+-    onInkStyleChange: (Boolean) -> Unit,
+-    modifier: Modifier = Modifier
+-) {
+-    Row(
+-        modifier = modifier,
+-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+-        verticalAlignment = Alignment.CenterVertically
+-    ) {
+-        NumpadStyleToggleItem(
+-            text = stringResource(id = R.string.numpad_style_normal),
+-            selected = !inkStyle,
+-            inkStyle = inkStyle,
+-            onClick = { onInkStyleChange(false) }
+-        )
+-        NumpadStyleToggleItem(
+-            text = stringResource(id = R.string.numpad_style_ink),
+-            selected = inkStyle,
+-            inkStyle = inkStyle,
+-            onClick = { onInkStyleChange(true) }
+-        )
+-    }
+-}
+-
+-@Composable
+-private fun NumpadStyleToggleItem(
+-    text: String,
+-    selected: Boolean,
+-    inkStyle: Boolean,
+-    onClick: () -> Unit
+-) {
+-    val shape = RoundedCornerShape(50)
+-    val containerColor = when {
+-        selected && inkStyle -> Color.Black
+-        selected -> MaterialTheme.colorScheme.primary
+-        inkStyle -> Color.White
+-        else -> Color.Transparent
+-    }
+-    val contentColor = when {
+-        selected && inkStyle -> Color.White
+-        selected -> MaterialTheme.colorScheme.onPrimary
+-        inkStyle -> Color.Black
+-        else -> MaterialTheme.colorScheme.onSurface
+-    }
+-    val borderColor = if (inkStyle) Color.Black else MaterialTheme.colorScheme.outline
+-
+-    Box(
+-        modifier = Modifier
+-            .clip(shape)
+-            .background(containerColor)
+-            .border(1.dp, borderColor, shape)
+-            .clickable(onClick = onClick)
+-            .padding(horizontal = 10.dp, vertical = 4.dp),
+-        contentAlignment = Alignment.Center
+-    ) {
+-        TextNormal(
+-            text = text,
+-            color = contentColor
+-        )
+-    }
+-}
+-
+ @Composable
+ private fun NumpadLayout(
+     sendKeyboardKeyReport: (ByteArray) -> Unit,
+diff --git a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MouseDialog.kt b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MouseDialog.kt
+index 0a11009..30f7f63 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MouseDialog.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MouseDialog.kt
+@@ -14,8 +14,13 @@ import androidx.compose.material3.IconButton
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.Surface
+ import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.saveable.rememberSaveable
++import androidx.compose.runtime.setValue
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.luminance
+ import androidx.compose.ui.res.dimensionResource
+ import androidx.compose.ui.res.stringResource
+@@ -24,6 +29,7 @@ import androidx.compose.ui.window.DialogProperties
+ import com.atharok.btremote.R
+ import com.atharok.btremote.common.utils.AppIcons
+ import com.atharok.btremote.domain.entities.remoteInput.MouseAction
++import com.atharok.btremote.ui.components.DialogInkStyleToggle
+ import com.atharok.btremote.ui.components.DialogSystemBarAppearance
+ import com.atharok.btremote.ui.components.TextMedium
+ 
+@@ -37,7 +43,13 @@ fun MouseDialog(
+     onDismissRequest: () -> Unit,
+     modifier: Modifier = Modifier
+ ) {
+-    val useDarkSystemBarIcons = MaterialTheme.colorScheme.background.luminance() > 0.5f
++    val isEInkTheme = MaterialTheme.colorScheme.background == Color.White
++    var useInkStyle by rememberSaveable { mutableStateOf(isEInkTheme) }
++    val useDarkSystemBarIcons = if (useInkStyle) {
++        true
++    } else {
++        MaterialTheme.colorScheme.background.luminance() > 0.5f
++    }
+ 
+     Dialog(
+         onDismissRequest = onDismissRequest,
+@@ -50,8 +62,8 @@ fun MouseDialog(
+ 
+         Surface(
+             modifier = modifier.fillMaxSize(),
+-            color = MaterialTheme.colorScheme.background,
+-            contentColor = MaterialTheme.colorScheme.onBackground
++            color = if (useInkStyle) Color.White else MaterialTheme.colorScheme.background,
++            contentColor = if (useInkStyle) Color.Black else MaterialTheme.colorScheme.onBackground
+         ) {
+             Column(
+                 modifier = Modifier
+@@ -69,6 +81,11 @@ fun MouseDialog(
+                         modifier = Modifier.weight(1f)
+                     )
+ 
++                    DialogInkStyleToggle(
++                        inkStyle = useInkStyle,
++                        onInkStyleChange = { useInkStyle = it }
++                    )
++
+                     IconButton(onClick = onDismissRequest) {
+                         Icon(
+                             imageVector = AppIcons.Close,
+@@ -83,6 +100,7 @@ fun MouseDialog(
+                     shouldInvertMouseScrollingDirection = shouldInvertMouseScrollingDirection,
+                     useGyroscope = useGyroscope,
+                     sendMouseInput = sendMouseInput,
++                    inkStyle = useInkStyle,
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .weight(1f)
+diff --git a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePad.kt b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePad.kt
+index f1b7eb3..2ba4c3a 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePad.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePad.kt
+@@ -1,5 +1,7 @@
+ package com.atharok.btremote.ui.views.mouse
+ 
++import androidx.compose.foundation.background
++import androidx.compose.foundation.border
+ import androidx.compose.foundation.gestures.awaitEachGesture
+ import androidx.compose.foundation.gestures.awaitFirstDown
+ import androidx.compose.foundation.layout.Box
+@@ -7,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.remember
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
+ import androidx.compose.ui.geometry.Offset
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.Shape
+ import androidx.compose.ui.input.pointer.PointerInputChange
+ import androidx.compose.ui.input.pointer.changedToDown
+ import androidx.compose.ui.input.pointer.pointerInput
+ import androidx.compose.ui.input.pointer.positionChange
++import androidx.compose.ui.unit.dp
+ import com.atharok.btremote.common.utils.Ref
+ import com.atharok.btremote.common.utils.TAP_DRIFT_MAX_PX
+ import com.atharok.btremote.common.utils.TAP_DURATION_MAX
+@@ -27,17 +32,15 @@ fun MousePad(
+     sendMousePosition: (Float, Float) -> Unit,
+     sendMouseScroll: (Float) -> Unit,
+     shape: Shape,
+-    modifier: Modifier = Modifier
++    modifier: Modifier = Modifier,
++    inkStyle: Boolean = false
+ ) {
+     val tapStartTimestamp = remember { Ref(0L) }
+     val tapFingerCount = remember { Ref(0) }
+     val tapAccumulatedDrift = remember { Ref(0f) }
+     val scrollAccumulator = remember { Ref(0f) }
+ 
+-    DefaultElevatedCard(
+-        modifier = modifier,
+-        shape = shape
+-    ) {
++    val padContent: @Composable () -> Unit = {
+         Box(
+             modifier = Modifier
+                 .fillMaxSize()
+@@ -79,6 +82,24 @@ fun MousePad(
+                 }
+         )
+     }
++
++    if (inkStyle) {
++        Box(
++            modifier = modifier
++                .clip(shape)
++                .background(Color.White)
++                .border(2.dp, Color.Black, shape)
++        ) {
++            padContent()
++        }
++    } else {
++        DefaultElevatedCard(
++            modifier = modifier,
++            shape = shape
++        ) {
++            padContent()
++        }
++    }
+ }
+ 
+ // ---- Actions ----
+diff --git a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePadLayout.kt b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePadLayout.kt
+index a36997a..b5e2ebb 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePadLayout.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/views/mouse/MousePadLayout.kt
+@@ -1,18 +1,43 @@
+ package com.atharok.btremote.ui.views.mouse
+ 
++import androidx.compose.foundation.background
++import androidx.compose.foundation.border
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.gestures.awaitEachGesture
++import androidx.compose.foundation.gestures.awaitFirstDown
++import androidx.compose.foundation.gestures.waitForUpOrCancellation
++import androidx.compose.foundation.interaction.MutableInteractionSource
++import androidx.compose.foundation.interaction.PressInteraction
++import androidx.compose.foundation.interaction.collectIsPressedAsState
+ import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.Column
+ import androidx.compose.foundation.layout.Row
+ import androidx.compose.foundation.layout.absolutePadding
+ import androidx.compose.foundation.layout.fillMaxHeight
++import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.foundation.layout.fillMaxWidth
+ import androidx.compose.foundation.layout.padding
+ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+ import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material3.Icon
+ import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
+ import androidx.compose.runtime.remember
++import androidx.compose.runtime.rememberCoroutineScope
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.RectangleShape
++import androidx.compose.ui.graphics.Shape
++import androidx.compose.ui.graphics.vector.ImageVector
++import androidx.compose.ui.hapticfeedback.HapticFeedbackType
++import androidx.compose.ui.input.pointer.pointerInput
++import androidx.compose.ui.platform.LocalHapticFeedback
+ import androidx.compose.ui.res.dimensionResource
+ import androidx.compose.ui.res.stringResource
+ import androidx.compose.ui.unit.dp
+@@ -20,8 +45,11 @@ import com.atharok.btremote.R
+ import com.atharok.btremote.common.utils.AppIcons
+ import com.atharok.btremote.common.utils.Ref
+ import com.atharok.btremote.domain.entities.remoteInput.MouseAction
++import com.atharok.btremote.ui.components.TextNormal
+ import com.atharok.btremote.ui.components.customButtons.EmptySurfaceButton
+ import com.atharok.btremote.ui.components.customButtons.IconHoldButton
++import kotlinx.coroutines.delay
++import kotlinx.coroutines.launch
+ 
+ @Composable
+ fun MousePadLayout(
+@@ -30,7 +58,8 @@ fun MousePadLayout(
+     shouldInvertMouseScrollingDirection: Boolean,
+     useGyroscope: Boolean,
+     sendMouseInput: (MouseAction, Float, Float, Float) -> Unit,
+-    modifier: Modifier = Modifier
++    modifier: Modifier = Modifier,
++    inkStyle: Boolean = false
+ ) {
+     val mouseAction: Ref<MouseAction> = remember { Ref(MouseAction.NONE) }
+ 
+@@ -71,7 +100,8 @@ fun MousePadLayout(
+                 ),
+                 modifier = Modifier
+                     .weight(0.85f)
+-                    .padding(end = dimensionResource(id = R.dimen.padding_min))
++                    .padding(end = dimensionResource(id = R.dimen.padding_min)),
++                inkStyle = inkStyle
+             )
+ 
+             ScrollMouseButtonsLayout(
+@@ -81,7 +111,8 @@ fun MousePadLayout(
+                 },
+                 modifier = Modifier
+                     .weight(0.15f)
+-                    .padding(start = dimensionResource(id = R.dimen.padding_min))
++                    .padding(start = dimensionResource(id = R.dimen.padding_min)),
++                inkStyle = inkStyle
+             )
+         }
+ 
+@@ -93,7 +124,8 @@ fun MousePadLayout(
+             modifier = Modifier
+                 .fillMaxWidth()
+                 .weight(0.2f)
+-                .padding(top = dimensionResource(id = R.dimen.padding_min))
++                .padding(top = dimensionResource(id = R.dimen.padding_min)),
++            inkStyle = inkStyle
+         )
+     }
+ }
+@@ -103,14 +135,17 @@ fun MousePadLayout(
+ @Composable
+ private fun MouseButtonsLayout(
+     sendMouseAction: (MouseAction) -> Unit,
+-    modifier: Modifier = Modifier
++    modifier: Modifier = Modifier,
++    inkStyle: Boolean = false
+ ) {
+     Row(modifier = modifier, horizontalArrangement = Arrangement.Absolute.Left) {
+ 
+         // Start
+-        EmptySurfaceButton(
++        MouseButton(
++            text = stringResource(id = R.string.mouse_click_left),
+             touchDown = { sendMouseAction(MouseAction.MOUSE_CLICK_LEFT) },
+             touchUp = { sendMouseAction(MouseAction.NONE) },
++            inkStyle = inkStyle,
+             modifier = Modifier
+                 .weight(0.38f)
+                 .fillMaxHeight()
+@@ -124,9 +159,11 @@ private fun MouseButtonsLayout(
+         )
+ 
+         // Center
+-        EmptySurfaceButton(
++        MouseButton(
++            text = stringResource(id = R.string.mouse_click_middle),
+             touchDown = { sendMouseAction(MouseAction.MOUSE_CLICK_MIDDLE) },
+             touchUp = { sendMouseAction(MouseAction.NONE) },
++            inkStyle = inkStyle,
+             modifier = Modifier
+                 .weight(0.24f)
+                 .fillMaxHeight()
+@@ -137,9 +174,11 @@ private fun MouseButtonsLayout(
+         )
+ 
+         // End
+-        EmptySurfaceButton(
++        MouseButton(
++            text = stringResource(id = R.string.mouse_click_right),
+             touchDown = { sendMouseAction(MouseAction.MOUSE_CLICK_RIGHT) },
+             touchUp = { sendMouseAction(MouseAction.NONE) },
++            inkStyle = inkStyle,
+             modifier = Modifier
+                 .weight(0.38f)
+                 .fillMaxHeight()
+@@ -154,47 +193,206 @@ private fun MouseButtonsLayout(
+     }
+ }
+ 
++@Composable
++private fun MouseButton(
++    text: String,
++    touchDown: () -> Unit,
++    touchUp: () -> Unit,
++    inkStyle: Boolean,
++    modifier: Modifier = Modifier,
++    shape: Shape = RectangleShape
++) {
++    if (inkStyle) {
++        InkMouseButton(
++            text = text,
++            touchDown = touchDown,
++            touchUp = touchUp,
++            modifier = modifier,
++            shape = shape
++        )
++    } else {
++        EmptySurfaceButton(
++            touchDown = touchDown,
++            touchUp = touchUp,
++            modifier = modifier,
++            shape = shape
++        )
++    }
++}
++
++@Composable
++private fun InkMouseButton(
++    text: String,
++    touchDown: () -> Unit,
++    touchUp: () -> Unit,
++    modifier: Modifier = Modifier,
++    shape: Shape = RectangleShape
++) {
++    val interactionSource = remember { MutableInteractionSource() }
++    val isPressed by interactionSource.collectIsPressedAsState()
++    val haptic = LocalHapticFeedback.current
++
++    LaunchedEffect(interactionSource) {
++        interactionSource.interactions.collect { interaction ->
++            when (interaction) {
++                is PressInteraction.Press -> {
++                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
++                    touchDown()
++                }
++                is PressInteraction.Release -> touchUp()
++                is PressInteraction.Cancel -> touchUp()
++            }
++        }
++    }
++
++    Box(
++        modifier = modifier
++            .clip(shape)
++            .background(if (isPressed) Color.Black else Color.White)
++            .border(2.dp, Color.Black, shape)
++            .clickable(
++                interactionSource = interactionSource,
++                indication = null,
++                onClick = {}
++            ),
++        contentAlignment = Alignment.Center
++    ) {
++        TextNormal(
++            text = text,
++            color = if (isPressed) Color.White else Color.Black
++        )
++    }
++}
++
+ // ---- Scroll Up/Down buttons ----
+ 
+ @Composable
+ private fun ScrollMouseButtonsLayout(
+     scrollSpeed: Float,
+     sendMouseScroll: (Float) -> Unit,
+-    modifier: Modifier = Modifier
++    modifier: Modifier = Modifier,
++    inkStyle: Boolean = false
+ ) {
+     Column(modifier = modifier) {
+-        IconHoldButton(
+-            image = AppIcons.MouseScrollUp,
+-            contentDescription = stringResource(id = R.string.mouse_wheel_up),
+-            onHold = {
+-                sendMouseScroll(1f)
+-            },
+-            onRelease = {
+-                sendMouseScroll(0f)
+-            },
+-            modifier = Modifier
+-                .fillMaxWidth()
+-                .weight(0.5f)
+-                .padding(bottom = dimensionResource(id = R.dimen.padding_min)),
+-            durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
+-            shape = RoundedCornerShape(topEnd = dimensionResource(id = R.dimen.card_corner_radius))
+-        )
++        if (inkStyle) {
++            InkIconHoldButton(
++                image = AppIcons.MouseScrollUp,
++                contentDescription = stringResource(id = R.string.mouse_wheel_up),
++                onHold = {
++                    sendMouseScroll(1f)
++                },
++                onRelease = {
++                    sendMouseScroll(0f)
++                },
++                modifier = Modifier
++                    .fillMaxWidth()
++                    .weight(0.5f)
++                    .padding(bottom = dimensionResource(id = R.dimen.padding_min)),
++                durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
++                shape = RoundedCornerShape(topEnd = dimensionResource(id = R.dimen.card_corner_radius))
++            )
++        } else {
++            IconHoldButton(
++                image = AppIcons.MouseScrollUp,
++                contentDescription = stringResource(id = R.string.mouse_wheel_up),
++                onHold = {
++                    sendMouseScroll(1f)
++                },
++                onRelease = {
++                    sendMouseScroll(0f)
++                },
++                modifier = Modifier
++                    .fillMaxWidth()
++                    .weight(0.5f)
++                    .padding(bottom = dimensionResource(id = R.dimen.padding_min)),
++                durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
++                shape = RoundedCornerShape(topEnd = dimensionResource(id = R.dimen.card_corner_radius))
++            )
++        }
+ 
+-        IconHoldButton(
+-            image = AppIcons.MouseScrollDown,
+-            contentDescription = stringResource(id = R.string.mouse_wheel_down),
+-            onHold = {
+-                sendMouseScroll(-1f)
+-            },
+-            onRelease = {
+-                sendMouseScroll(0f)
++        if (inkStyle) {
++            InkIconHoldButton(
++                image = AppIcons.MouseScrollDown,
++                contentDescription = stringResource(id = R.string.mouse_wheel_down),
++                onHold = {
++                    sendMouseScroll(-1f)
++                },
++                onRelease = {
++                    sendMouseScroll(0f)
++                },
++                modifier = Modifier
++                    .fillMaxWidth()
++                    .weight(0.5f)
++                    .padding(top = dimensionResource(id = R.dimen.padding_min)),
++                durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
++                shape = RectangleShape
++            )
++        } else {
++            IconHoldButton(
++                image = AppIcons.MouseScrollDown,
++                contentDescription = stringResource(id = R.string.mouse_wheel_down),
++                onHold = {
++                    sendMouseScroll(-1f)
++                },
++                onRelease = {
++                    sendMouseScroll(0f)
++                },
++                modifier = Modifier
++                    .fillMaxWidth()
++                    .weight(0.5f)
++                    .padding(top = dimensionResource(id = R.dimen.padding_min)),
++                durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
++                shape = RectangleShape
++            )
++        }
++    }
++}
++
++@Composable
++private fun InkIconHoldButton(
++    image: ImageVector,
++    contentDescription: String,
++    onHold: () -> Unit,
++    onRelease: () -> Unit,
++    modifier: Modifier = Modifier,
++    durationBetweenRepeatsInMillis: Long = 100L,
++    shape: Shape = RectangleShape
++) {
++    val coroutineScope = rememberCoroutineScope()
++    val haptic = LocalHapticFeedback.current
++    var isPressed by remember { mutableStateOf(false) }
++
++    Box(
++        modifier = modifier
++            .clip(shape)
++            .background(if (isPressed) Color.Black else Color.White)
++            .border(2.dp, Color.Black, shape)
++            .pointerInput(Unit) {
++                awaitEachGesture {
++                    awaitFirstDown()
++                    isPressed = true
++                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
++
++                    val job = coroutineScope.launch {
++                        while (true) {
++                            onHold()
++                            delay(durationBetweenRepeatsInMillis)
++                        }
++                    }
++
++                    waitForUpOrCancellation()
++                    job.cancel()
++                    isPressed = false
++                    onRelease()
++                }
+             },
+-            modifier = Modifier
+-                .fillMaxWidth()
+-                .weight(0.5f)
+-                .padding(top = dimensionResource(id = R.dimen.padding_min)),
+-            durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
+-            shape = RectangleShape
++        contentAlignment = Alignment.Center
++    ) {
++        Icon(
++            imageVector = image,
++            contentDescription = contentDescription,
++            modifier = Modifier.fillMaxSize(0.5f),
++            tint = if (isPressed) Color.White else Color.Black
+         )
+     }
+ }
+-- 
+2.49.0.windows.1
+
