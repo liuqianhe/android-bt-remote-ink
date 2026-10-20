@@ -1,0 +1,763 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: liuqianhe <62452526+liuqianhe@users.noreply.github.com>
+Date: Tue, 20 Oct 2026 17:02:14 +0800
+Subject: [PATCH] =?UTF-8?q?=E6=96=B0=E5=A2=9E=E6=B0=B4=E5=A2=A8=E5=B1=8F?=
+ =?UTF-8?q?=E4=B8=BB=E9=A2=98=E5=92=8C=E5=85=A8=E5=B1=8F=E6=95=B0=E5=AD=97?=
+ =?UTF-8?q?=E5=B0=8F=E9=94=AE=E7=9B=98?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 新增“水墨屏（黑白）”主题：纯白背景、纯黑前景，卡片增加黑色描边
+- 新增全屏数字小键盘：实体数字区布局，使用 HID Keypad 键码发送按键
+- 数字小键盘支持正常/墨水样式切换，按键适度放大并在键帽内居中显示文字
+
+diff --git a/app/src/main/java/com/atharok/btremote/common/utils/AppIcons.kt b/app/src/main/java/com/atharok/btremote/common/utils/AppIcons.kt
+index 99ed6b8..6c52f9b 100644
+--- a/app/src/main/java/com/atharok/btremote/common/utils/AppIcons.kt
++++ b/app/src/main/java/com/atharok/btremote/common/utils/AppIcons.kt
+@@ -25,8 +25,10 @@ import androidx.compose.material.icons.rounded.BluetoothDisabled
+ import androidx.compose.material.icons.rounded.BrightnessHigh
+ import androidx.compose.material.icons.rounded.BrightnessLow
+ import androidx.compose.material.icons.rounded.Circle
++import androidx.compose.material.icons.rounded.Close
+ import androidx.compose.material.icons.rounded.ClosedCaption
+ import androidx.compose.material.icons.rounded.Computer
++import androidx.compose.material.icons.rounded.Dialpad
+ import androidx.compose.material.icons.rounded.ControlCamera
+ import androidx.compose.material.icons.rounded.Delete
+ import androidx.compose.material.icons.rounded.DeviceUnknown
+@@ -153,6 +155,8 @@ object AppIcons {
+     // ---- Keyboard ----
+ 
+     val Keyboard get() = Icons.Rounded.Keyboard
++    val Numpad get() = Icons.Rounded.Dialpad
++    val Close get() = Icons.Rounded.Close
+     val KeyboardTab get() = Icons.AutoMirrored.Rounded.KeyboardTab
+     val KeyboardScreenshot get() = Icons.Rounded.ScreenshotMonitor
+     val KeyboardBackspace get() = Icons.AutoMirrored.Rounded.Backspace
+diff --git a/app/src/main/java/com/atharok/btremote/domain/entities/remoteInput/keyboard/KeyboardKey.kt b/app/src/main/java/com/atharok/btremote/domain/entities/remoteInput/keyboard/KeyboardKey.kt
+index ce0aecb..185659b 100644
+--- a/app/src/main/java/com/atharok/btremote/domain/entities/remoteInput/keyboard/KeyboardKey.kt
++++ b/app/src/main/java/com/atharok/btremote/domain/entities/remoteInput/keyboard/KeyboardKey.kt
+@@ -78,6 +78,25 @@ enum class KeyboardKey(val byte: Byte) {
+     KEY_PAGE_UP(0x4B),
+     KEY_PAGE_DOWN(0x4E),
+ 
++    // Keypad (HID Usage Page 0x07)
++    KEY_NUM_LOCK(0x53),
++    KEY_NUM_DIVIDE(0x54),
++    KEY_NUM_MULTIPLY(0x55),
++    KEY_NUM_SUBTRACT(0x56),
++    KEY_NUM_ADD(0x57),
++    KEY_NUM_ENTER(0x58),
++    KEY_NUM_1(0x59),
++    KEY_NUM_2(0x5A),
++    KEY_NUM_3(0x5B),
++    KEY_NUM_4(0x5C),
++    KEY_NUM_5(0x5D),
++    KEY_NUM_6(0x5E),
++    KEY_NUM_7(0x5F),
++    KEY_NUM_8(0x60),
++    KEY_NUM_9(0x61),
++    KEY_NUM_0(0x62),
++    KEY_NUM_DOT(0x63),
++
+     // Modifier keys
+     KEY_SHIFT_LEFT(0x02),
+     KEY_SHIFT_RIGHT(0x20),
+diff --git a/app/src/main/java/com/atharok/btremote/domain/entities/settings/ThemeEntity.kt b/app/src/main/java/com/atharok/btremote/domain/entities/settings/ThemeEntity.kt
+index b1f0e1c..976c3c8 100644
+--- a/app/src/main/java/com/atharok/btremote/domain/entities/settings/ThemeEntity.kt
++++ b/app/src/main/java/com/atharok/btremote/domain/entities/settings/ThemeEntity.kt
+@@ -6,5 +6,6 @@ import com.atharok.btremote.R
+ enum class ThemeEntity(@param:StringRes val stringRes: Int) {
+     SYSTEM(R.string.theme_system),
+     LIGHT(R.string.theme_light),
+-    DARK(R.string.theme_dark)
++    DARK(R.string.theme_dark),
++    E_INK(R.string.theme_e_ink)
+ }
+\ No newline at end of file
+diff --git a/app/src/main/java/com/atharok/btremote/ui/components/Card.kt b/app/src/main/java/com/atharok/btremote/ui/components/Card.kt
+index 5d0511a..337d454 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/components/Card.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/components/Card.kt
+@@ -1,5 +1,6 @@
+ package com.atharok.btremote.ui.components
+ 
++import androidx.compose.foundation.border
+ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.material3.CardDefaults
+ import androidx.compose.material3.ElevatedCard
+@@ -7,9 +8,11 @@ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.surfaceColorAtElevation
+ import androidx.compose.runtime.Composable
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.Shape
+ import androidx.compose.ui.res.dimensionResource
+ import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.unit.dp
+ import com.atharok.btremote.R
+ import com.atharok.btremote.ui.theme.surfaceElevationMedium
+ import com.atharok.btremote.ui.theme.surfaceElevationShadow
+@@ -22,8 +25,13 @@ fun DefaultElevatedCard(
+     shadowElevation: Dp = surfaceElevationShadow(),
+     content: @Composable () -> Unit
+ ) {
++    val isEInkTheme = MaterialTheme.colorScheme.background == Color.White
++
+     ElevatedCard(
+-        modifier = modifier,
++        modifier = modifier.then(
++            if (isEInkTheme) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, shape)
++            else Modifier
++        ),
+         shape = shape,
+         colors = CardDefaults.elevatedCardColors(
+             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
+diff --git a/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt b/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
+index b1cd4e6..c34fe7e 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/screens/RemoteScreen.kt
+@@ -59,6 +59,7 @@ import com.atharok.btremote.ui.theme.surfaceElevationMedium
+ import com.atharok.btremote.ui.views.RemoteScreenHelpModalBottomSheet
+ import com.atharok.btremote.ui.views.keyboard.AdvancedKeyboard
+ import com.atharok.btremote.ui.views.keyboard.AdvancedKeyboardModalBottomSheet
++import com.atharok.btremote.ui.views.keyboard.NumpadDialog
+ import com.atharok.btremote.ui.views.keyboard.VirtualKeyboardModalBottomSheet
+ import com.atharok.btremote.ui.views.mouse.MousePadLayout
+ import com.atharok.btremote.ui.views.remote.MinimalistRemoteView
+@@ -94,6 +95,9 @@ fun RemoteScreen(
+     // Keyboard
+     var isKeyboardVisible: Boolean by rememberSaveable { mutableStateOf(false) }
+ 
++    // Numeric Keypad
++    var isNumpadVisible: Boolean by rememberSaveable { mutableStateOf(false) }
++
+     // More Buttons
+     var isMoreButtonsVisible: Boolean by rememberSaveable { mutableStateOf(false) }
+ 
+@@ -122,6 +126,8 @@ fun RemoteScreen(
+                 useAdvancedKeyboardIntegrated = remoteSettings.useAdvancedKeyboard && remoteSettings.useAdvancedKeyboardIntegrated,
+                 isKeyboardVisible = isKeyboardVisible,
+                 onKeyboardVisibleChanged = { isKeyboardVisible = it },
++                isNumpadVisible = isNumpadVisible,
++                onNumpadVisibleChanged = { isNumpadVisible = it },
+                 isMoreButtonsVisible = isMoreButtonsVisible,
+                 onMoreButtonsVisibleChanged = { isMoreButtonsVisible = it },
+                 isHelpBottomSheetVisible = isHelpBottomSheetVisible,
+@@ -167,6 +173,12 @@ fun RemoteScreen(
+                         modifier = modifier
+                     )
+                 }
++                isNumpadVisible -> {
++                    NumpadDialog(
++                        sendKeyboardKeyReport = remoteViewModel.sendKeyboardReport,
++                        onDismissRequest = { isNumpadVisible = false }
++                    )
++                }
+                 isKeyboardVisible && (!remoteSettings.useAdvancedKeyboard || !remoteSettings.useAdvancedKeyboardIntegrated) -> {
+                     KeyboardModalBottomSheet(
+                         useAdvancedKeyboard = remoteSettings.useAdvancedKeyboard,
+@@ -475,6 +487,8 @@ private fun TopBarActions(
+     useAdvancedKeyboardIntegrated: Boolean,
+     isKeyboardVisible: Boolean,
+     onKeyboardVisibleChanged: (Boolean) -> Unit,
++    isNumpadVisible: Boolean,
++    onNumpadVisibleChanged: (Boolean) -> Unit,
+     isMoreButtonsVisible: Boolean,
+     onMoreButtonsVisibleChanged: (Boolean) -> Unit,
+     isHelpBottomSheetVisible: Boolean,
+@@ -547,6 +561,16 @@ private fun TopBarActions(
+             }
+         )
+ 
++        // Numeric Keypad
++        BasicDropdownMenuItem(
++            text = stringResource(id = R.string.numeric_keypad),
++            icon = AppIcons.Numpad,
++            onClick = {
++                closeDropdownMenu()
++                onNumpadVisibleChanged(!isNumpadVisible)
++            }
++        )
++
+         // Disconnect
+         BasicDropdownMenuItem(
+             text = stringResource(id = R.string.disconnect),
+diff --git a/app/src/main/java/com/atharok/btremote/ui/theme/Color.kt b/app/src/main/java/com/atharok/btremote/ui/theme/Color.kt
+index 58a914d..8a0e617 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/theme/Color.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/theme/Color.kt
+@@ -222,3 +222,9 @@ val surfaceContainerHighestDarkHighContrast = Color(0xFF45474C)
+ 
+ val backgroundBlack = Color.Black
+ val surfaceBlack = Color.Black
++
++// E-ink
++
++val eInkBackground = Color(0xFFFFFFFF)
++val eInkOnBackground = Color(0xFF000000)
++val eInkOutline = Color(0xFF000000)
+diff --git a/app/src/main/java/com/atharok/btremote/ui/theme/Theme.kt b/app/src/main/java/com/atharok/btremote/ui/theme/Theme.kt
+index dcf44fc..3e58beb 100644
+--- a/app/src/main/java/com/atharok/btremote/ui/theme/Theme.kt
++++ b/app/src/main/java/com/atharok/btremote/ui/theme/Theme.kt
+@@ -62,6 +62,45 @@ private val lightScheme = lightColorScheme(
+     surfaceContainerHighest = surfaceContainerHighestLight,
+ )
+ 
++private val eInkScheme = lightColorScheme(
++    primary = eInkOnBackground,
++    onPrimary = eInkBackground,
++    primaryContainer = eInkBackground,
++    onPrimaryContainer = eInkOnBackground,
++    secondary = eInkOnBackground,
++    onSecondary = eInkBackground,
++    secondaryContainer = eInkBackground,
++    onSecondaryContainer = eInkOnBackground,
++    tertiary = eInkOnBackground,
++    onTertiary = eInkBackground,
++    tertiaryContainer = eInkBackground,
++    onTertiaryContainer = eInkOnBackground,
++    error = eInkOnBackground,
++    onError = eInkBackground,
++    errorContainer = eInkBackground,
++    onErrorContainer = eInkOnBackground,
++    background = eInkBackground,
++    onBackground = eInkOnBackground,
++    surface = eInkBackground,
++    onSurface = eInkOnBackground,
++    surfaceVariant = eInkBackground,
++    onSurfaceVariant = eInkOnBackground,
++    outline = eInkOutline,
++    outlineVariant = eInkOutline,
++    scrim = eInkOnBackground,
++    inverseSurface = eInkOnBackground,
++    inverseOnSurface = eInkBackground,
++    inversePrimary = eInkBackground,
++    surfaceTint = eInkBackground,
++    surfaceDim = eInkBackground,
++    surfaceBright = eInkBackground,
++    surfaceContainerLowest = eInkBackground,
++    surfaceContainerLow = eInkBackground,
++    surfaceContainer = eInkBackground,
++    surfaceContainerHigh = eInkBackground,
++    surfaceContainerHighest = eInkBackground,
++)
++
+ private val darkScheme = darkColorScheme(
+     primary = primaryDark,
+     onPrimary = onPrimaryDark,
+@@ -280,9 +319,11 @@ fun BtRemoteTheme(
+         ThemeEntity.SYSTEM -> isSystemInDarkTheme()
+         ThemeEntity.LIGHT -> false
+         ThemeEntity.DARK -> true
++        ThemeEntity.E_INK -> false
+     }
+ 
+     val colorScheme = when {
++        theme == ThemeEntity.E_INK -> eInkScheme
+         useDynamicColors && isDynamicColorsAvailable() -> {
+             if (useDarkTheme) {
+                 if(useBlackColorForDarkTheme) {
+diff --git a/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt b/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt
+new file mode 100644
+index 0000000..1ed885e
+--- /dev/null
++++ b/app/src/main/java/com/atharok/btremote/ui/views/keyboard/NumpadDialog.kt
+@@ -0,0 +1,448 @@
++package com.atharok.btremote.ui.views.keyboard
++
++import android.os.Build
++import android.view.View
++import android.view.WindowInsetsController
++import androidx.compose.foundation.background
++import androidx.compose.foundation.border
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.WindowInsets
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.safeDrawing
++import androidx.compose.foundation.layout.windowInsetsPadding
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Surface
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.saveable.rememberSaveable
++import androidx.compose.runtime.setValue
++import androidx.compose.runtime.withFrameNanos
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.graphics.luminance
++import androidx.compose.ui.platform.LocalView
++import androidx.compose.ui.res.dimensionResource
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.text.style.TextAlign
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.window.Dialog
++import androidx.compose.ui.window.DialogProperties
++import com.atharok.btremote.R
++import com.atharok.btremote.common.utils.AppIcons
++import com.atharok.btremote.common.utils.REMOTE_INPUT_NONE
++import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardKey
++import com.atharok.btremote.ui.components.AdaptiveText
++import com.atharok.btremote.ui.components.TextMedium
++import com.atharok.btremote.ui.components.TextNormal
++import com.atharok.btremote.ui.components.customButtons.RawButton
++import com.atharok.btremote.ui.components.customButtons.TextKeyboardKey
++import com.atharok.btremote.ui.theme.surfaceElevationHigh
++import kotlinx.coroutines.awaitCancellation
++
++@Composable
++fun NumpadDialog(
++    sendKeyboardKeyReport: (ByteArray) -> Unit,
++    onDismissRequest: () -> Unit,
++    modifier: Modifier = Modifier
++) {
++    val isEInkTheme = MaterialTheme.colorScheme.background == Color.White
++    var useInkStyle by rememberSaveable { mutableStateOf(isEInkTheme) }
++    val useDarkSystemBarIcons = if (useInkStyle) {
++        true
++    } else {
++        MaterialTheme.colorScheme.background.luminance() > 0.5f
++    }
++
++    Dialog(
++        onDismissRequest = onDismissRequest,
++        properties = DialogProperties(
++            usePlatformDefaultWidth = false,
++            decorFitsSystemWindows = false
++        )
++    ) {
++        DialogSystemBarAppearance(useDarkIcons = useDarkSystemBarIcons)
++
++        Surface(
++            modifier = modifier.fillMaxSize(),
++            color = if (useInkStyle) Color.White else MaterialTheme.colorScheme.background,
++            contentColor = if (useInkStyle) Color.Black else MaterialTheme.colorScheme.onBackground
++        ) {
++            Column(
++                modifier = Modifier
++                    .fillMaxSize()
++                    .windowInsetsPadding(WindowInsets.safeDrawing)
++                    .padding(dimensionResource(id = R.dimen.padding_large)),
++                verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small))
++            ) {
++                Row(
++                    modifier = Modifier.fillMaxWidth(),
++                    verticalAlignment = Alignment.CenterVertically
++                ) {
++                    TextMedium(
++                        text = stringResource(id = R.string.numeric_keypad),
++                        modifier = Modifier.weight(1f)
++                    )
++
++                    NumpadStyleToggle(
++                        inkStyle = useInkStyle,
++                        onInkStyleChange = { useInkStyle = it }
++                    )
++
++                    IconButton(onClick = onDismissRequest) {
++                        Icon(
++                            imageVector = AppIcons.Close,
++                            contentDescription = stringResource(id = R.string.close)
++                        )
++                    }
++                }
++
++                Spacer(modifier = Modifier.weight(0.4f))
++
++                NumpadLayout(
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = useInkStyle,
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .weight(1f)
++                )
++
++                Spacer(modifier = Modifier.weight(0.3f))
++            }
++        }
++    }
++}
++
++@Composable
++private fun DialogSystemBarAppearance(useDarkIcons: Boolean) {
++    val view = LocalView.current
++
++    LaunchedEffect(useDarkIcons, view) {
++        while (!view.isAttachedToWindow) {
++            withFrameNanos { }
++        }
++        withFrameNanos { }
++
++        val appearanceMask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
++                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
++
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
++            val controller = view.windowInsetsController ?: return@LaunchedEffect
++            val appearance = if (useDarkIcons) appearanceMask else 0
++
++            controller.setSystemBarsAppearance(appearance, appearanceMask)
++            try {
++                awaitCancellation()
++            } finally {
++                controller.setSystemBarsAppearance(0, appearanceMask)
++            }
++        } else {
++            val rootView = view.rootView
++            val flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
++            val previous = rootView.systemUiVisibility
++
++            rootView.systemUiVisibility = if (useDarkIcons) {
++                previous or flags
++            } else {
++                previous and flags.inv()
++            }
++            try {
++                awaitCancellation()
++            } finally {
++                rootView.systemUiVisibility = previous
++            }
++        }
++    }
++}
++
++@Composable
++private fun NumpadStyleToggle(
++    inkStyle: Boolean,
++    onInkStyleChange: (Boolean) -> Unit,
++    modifier: Modifier = Modifier
++) {
++    Row(
++        modifier = modifier,
++        horizontalArrangement = Arrangement.spacedBy(4.dp),
++        verticalAlignment = Alignment.CenterVertically
++    ) {
++        NumpadStyleToggleItem(
++            text = stringResource(id = R.string.numpad_style_normal),
++            selected = !inkStyle,
++            inkStyle = inkStyle,
++            onClick = { onInkStyleChange(false) }
++        )
++        NumpadStyleToggleItem(
++            text = stringResource(id = R.string.numpad_style_ink),
++            selected = inkStyle,
++            inkStyle = inkStyle,
++            onClick = { onInkStyleChange(true) }
++        )
++    }
++}
++
++@Composable
++private fun NumpadStyleToggleItem(
++    text: String,
++    selected: Boolean,
++    inkStyle: Boolean,
++    onClick: () -> Unit
++) {
++    val shape = RoundedCornerShape(50)
++    val containerColor = when {
++        selected && inkStyle -> Color.Black
++        selected -> MaterialTheme.colorScheme.primary
++        inkStyle -> Color.White
++        else -> Color.Transparent
++    }
++    val contentColor = when {
++        selected && inkStyle -> Color.White
++        selected -> MaterialTheme.colorScheme.onPrimary
++        inkStyle -> Color.Black
++        else -> MaterialTheme.colorScheme.onSurface
++    }
++    val borderColor = if (inkStyle) Color.Black else MaterialTheme.colorScheme.outline
++
++    Box(
++        modifier = Modifier
++            .clip(shape)
++            .background(containerColor)
++            .border(1.dp, borderColor, shape)
++            .clickable(onClick = onClick)
++            .padding(horizontal = 10.dp, vertical = 4.dp),
++        contentAlignment = Alignment.Center
++    ) {
++        TextNormal(
++            text = text,
++            color = contentColor
++        )
++    }
++}
++
++@Composable
++private fun NumpadLayout(
++    sendKeyboardKeyReport: (ByteArray) -> Unit,
++    inkStyle: Boolean,
++    modifier: Modifier = Modifier
++) {
++    val gap = dimensionResource(id = R.dimen.padding_small)
++
++    Column(
++        modifier = modifier,
++        verticalArrangement = Arrangement.spacedBy(gap)
++    ) {
++        Row(
++            modifier = Modifier
++                .fillMaxWidth()
++                .weight(1f),
++            horizontalArrangement = Arrangement.spacedBy(gap)
++        ) {
++            NumpadKey(
++                text = "NumLock",
++                key = KeyboardKey.KEY_NUM_LOCK,
++                sendKeyboardKeyReport = sendKeyboardKeyReport,
++                inkStyle = inkStyle,
++                modifier = Modifier.weight(1f)
++            )
++            NumpadKey(
++                text = "/",
++                key = KeyboardKey.KEY_NUM_DIVIDE,
++                sendKeyboardKeyReport = sendKeyboardKeyReport,
++                inkStyle = inkStyle,
++                modifier = Modifier.weight(1f)
++            )
++            NumpadKey(
++                text = "*",
++                key = KeyboardKey.KEY_NUM_MULTIPLY,
++                sendKeyboardKeyReport = sendKeyboardKeyReport,
++                inkStyle = inkStyle,
++                modifier = Modifier.weight(1f)
++            )
++            NumpadKey(
++                text = "-",
++                key = KeyboardKey.KEY_NUM_SUBTRACT,
++                sendKeyboardKeyReport = sendKeyboardKeyReport,
++                inkStyle = inkStyle,
++                modifier = Modifier.weight(1f)
++            )
++        }
++
++        Row(
++            modifier = Modifier
++                .fillMaxWidth()
++                .weight(4f),
++            horizontalArrangement = Arrangement.spacedBy(gap)
++        ) {
++            Column(
++                modifier = Modifier.weight(3f),
++                verticalArrangement = Arrangement.spacedBy(gap)
++            ) {
++                NumpadRow(
++                    keys = arrayOf(
++                        "7" to KeyboardKey.KEY_NUM_7,
++                        "8" to KeyboardKey.KEY_NUM_8,
++                        "9" to KeyboardKey.KEY_NUM_9
++                    ),
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = inkStyle,
++                    modifier = Modifier.weight(1f)
++                )
++                NumpadRow(
++                    keys = arrayOf(
++                        "4" to KeyboardKey.KEY_NUM_4,
++                        "5" to KeyboardKey.KEY_NUM_5,
++                        "6" to KeyboardKey.KEY_NUM_6
++                    ),
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = inkStyle,
++                    modifier = Modifier.weight(1f)
++                )
++                NumpadRow(
++                    keys = arrayOf(
++                        "1" to KeyboardKey.KEY_NUM_1,
++                        "2" to KeyboardKey.KEY_NUM_2,
++                        "3" to KeyboardKey.KEY_NUM_3
++                    ),
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = inkStyle,
++                    modifier = Modifier.weight(1f)
++                )
++
++                Row(
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .weight(1f),
++                    horizontalArrangement = Arrangement.spacedBy(gap)
++                ) {
++                    NumpadKey(
++                        text = "0",
++                        key = KeyboardKey.KEY_NUM_0,
++                        sendKeyboardKeyReport = sendKeyboardKeyReport,
++                        inkStyle = inkStyle,
++                        modifier = Modifier.weight(2f)
++                    )
++                    NumpadKey(
++                        text = ".",
++                        key = KeyboardKey.KEY_NUM_DOT,
++                        sendKeyboardKeyReport = sendKeyboardKeyReport,
++                        inkStyle = inkStyle,
++                        modifier = Modifier.weight(1f)
++                    )
++                }
++            }
++
++            Column(
++                modifier = Modifier.weight(1f),
++                verticalArrangement = Arrangement.spacedBy(gap)
++            ) {
++                NumpadKey(
++                    text = "+",
++                    key = KeyboardKey.KEY_NUM_ADD,
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = inkStyle,
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .weight(2f)
++                )
++                NumpadKey(
++                    text = "Enter",
++                    key = KeyboardKey.KEY_NUM_ENTER,
++                    sendKeyboardKeyReport = sendKeyboardKeyReport,
++                    inkStyle = inkStyle,
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .weight(2f)
++                )
++            }
++        }
++    }
++}
++
++@Composable
++private fun NumpadRow(
++    keys: Array<Pair<String, KeyboardKey>>,
++    sendKeyboardKeyReport: (ByteArray) -> Unit,
++    inkStyle: Boolean,
++    modifier: Modifier = Modifier
++) {
++    Row(
++        modifier = modifier.fillMaxWidth(),
++        horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small))
++    ) {
++        keys.forEach { (text, key) ->
++            NumpadKey(
++                text = text,
++                key = key,
++                sendKeyboardKeyReport = sendKeyboardKeyReport,
++                inkStyle = inkStyle,
++                modifier = Modifier.weight(1f)
++            )
++        }
++    }
++}
++
++@Composable
++private fun NumpadKey(
++    text: String,
++    key: KeyboardKey,
++    sendKeyboardKeyReport: (ByteArray) -> Unit,
++    inkStyle: Boolean,
++    modifier: Modifier = Modifier
++) {
++    val shape = RoundedCornerShape(dimensionResource(id = R.dimen.keyboard_key_corner_radius))
++    val touchDown = {
++        sendKeyboardKeyReport(byteArrayOf(0x00, key.byte))
++    }
++    val touchUp = {
++        sendKeyboardKeyReport(REMOTE_INPUT_NONE)
++    }
++
++    if (inkStyle) {
++        RawButton(
++            touchDown = touchDown,
++            touchUp = touchUp,
++            modifier = modifier,
++            shape = shape
++        ) {
++            Box(
++                modifier = Modifier
++                    .fillMaxSize()
++                    .background(Color.White)
++                    .border(2.dp, Color.Black, shape),
++                contentAlignment = Alignment.Center
++            ) {
++                AdaptiveText(
++                    text = text,
++                    percent = 0.5f,
++                    modifier = Modifier
++                        .fillMaxSize()
++                        .padding(dimensionResource(id = R.dimen.padding_small)),
++                    color = Color.Black,
++                    textAlign = TextAlign.Center
++                )
++            }
++        }
++    } else {
++        TextKeyboardKey(
++            text = text,
++            touchDown = touchDown,
++            touchUp = touchUp,
++            modifier = modifier,
++            shape = shape,
++            elevation = surfaceElevationHigh()
++        )
++    }
++}
+diff --git a/app/src/main/res/values-zh-rCN/strings.xml b/app/src/main/res/values-zh-rCN/strings.xml
+index 6e6555d..beb4965 100644
+--- a/app/src/main/res/values-zh-rCN/strings.xml
++++ b/app/src/main/res/values-zh-rCN/strings.xml
+@@ -41,6 +41,7 @@
+     <string name="theme_system">系统</string>
+     <string name="theme_light">浅色</string>
+     <string name="theme_dark">深色</string>
++    <string name="theme_e_ink">水墨屏（黑白）</string>
+     <string name="theme_black">深色主题使用纯黑</string>
+     <string name="theme_black_oled_info">OLED 屏幕能耗更低</string>
+     <string name="dynamic_colors">动态配色</string>
+@@ -53,6 +54,9 @@
+     <string name="website">网站</string>
+     <string name="source_code">源代码</string>
+     <string name="keyboard">键盘</string>
++    <string name="numeric_keypad">数字小键盘</string>
++    <string name="numpad_style_normal">正常</string>
++    <string name="numpad_style_ink">墨水</string>
+     <string name="keyboard_language">键盘语言</string>
+     <string name="keyboard_english_us">英语（美国）</string>
+     <string name="keyboard_english_uk">英语（英国）</string>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 2b2cb89..d523202 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -108,6 +108,7 @@
+     <string name="theme_system">System</string>
+     <string name="theme_light">Light</string>
+     <string name="theme_dark">Dark</string>
++    <string name="theme_e_ink">E-ink (black and white)</string>
+     <string name="theme_black">True black for the dark theme</string>
+     <string name="theme_black_oled_info">Uses less energy on OLED screens</string>
+     <string name="dynamic_colors">Dynamic colors</string>
+@@ -145,6 +146,9 @@
+ 
+     <!-- Keyboard -->
+     <string name="keyboard">Keyboard</string>
++    <string name="numeric_keypad">Numeric keypad</string>
++    <string name="numpad_style_normal">Normal</string>
++    <string name="numpad_style_ink">E-ink</string>
+     <string name="keyboard_language">Keyboard language</string>
+     <string name="keyboard_language_info">Ensure that the selected keyboard language matches the one configured on the remote device.</string>
+     <string name="advanced_keyboard">Advanced keyboard</string>
