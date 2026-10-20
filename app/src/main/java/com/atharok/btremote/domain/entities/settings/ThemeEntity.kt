@@ -1,0 +1,11 @@
+package com.atharok.btremote.domain.entities.settings
+
+import androidx.annotation.StringRes
+import com.atharok.btremote.R
+
+enum class ThemeEntity(@param:StringRes val stringRes: Int) {
+    SYSTEM(R.string.theme_system),
+    LIGHT(R.string.theme_light),
+    DARK(R.string.theme_dark),
+    E_INK(R.string.theme_e_ink)
+}

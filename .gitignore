@@ -27,3 +27,8 @@ captures/
 *.apk
 *.aab
 *.ap_
+
+# Signing secrets (kept outside the repository)
+*.jks
+*.keystore
+upload.jks
