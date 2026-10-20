@@ -6,6 +6,19 @@ VERSION_NAME="0.0.7"
 set -euo pipefail
 rm -rf .git/modules/src/rebase-apply
 cd src
+
+if [ -n "${ANDROID_KEY_STORE_FILE:-}" ] && [ -n "${ANDROID_KEY_STORE_PASSWORD:-}" ] && [ -n "${ANDROID_KEY_ALIAS:-}" ] && [ -n "${ANDROID_KEY_PASSWORD:-}" ]; then
+    {
+        echo "storeFile=$ANDROID_KEY_STORE_FILE"
+        echo "storePassword=$ANDROID_KEY_STORE_PASSWORD"
+        echo "keyAlias=$ANDROID_KEY_ALIAS"
+        echo "keyPassword=$ANDROID_KEY_PASSWORD"
+        if [ -n "${ANDROID_HOME:-}" ]; then
+            echo "sdk.dir=${ANDROID_HOME//\\//}"
+        fi
+    } > local.properties
+fi
+
 git am --whitespace=nowarn --keep-non-patch ../patches/*.patch
 
 cp -R ../res/. app/src/main/res/
