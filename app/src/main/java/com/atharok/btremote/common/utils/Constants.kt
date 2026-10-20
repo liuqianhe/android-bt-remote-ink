@@ -7,15 +7,15 @@ import com.atharok.btremote.domain.entities.settings.ThemeEntity
 const val NOTIFICATION_ID = 1
 const val NOTIFICATION_CHANNEL_ID = "notificationChannelId"
 
-const val SOURCE_CODE_LINK = "https://github.com/jqssun/android-bt-remote"
-const val WEB_SITE_LINK = "https://github.com/jqssun/android-bt-remote"
+const val SOURCE_CODE_LINK = "https://github.com/liuqianhe/android-bt-remote-ink"
+const val WEB_SITE_LINK = "https://github.com/liuqianhe/android-bt-remote-ink"
 
 const val DATA_STORE_PREFERENCES_SETTINGS_NAME = "dataStoreSettings"
 
 // ---- Settings default value ----
 
 // ---- Appearance ----
-val DEFAULT_THEME = ThemeEntity.SYSTEM
+val DEFAULT_THEME = ThemeEntity.E_INK
 const val DEFAULT_USE_BLACK_COLOR_FOR_DARK_THEME: Boolean = false
 const val DEFAULT_USE_FULL_SCREEN: Boolean = false
 

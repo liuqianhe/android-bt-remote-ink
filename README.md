@@ -1,5 +1,7 @@
 # Bluetooth HID Remote for Android
 
+**English** | [简体中文](README_zh.md)
+
 [![Stars](https://img.shields.io/github/stars/liuqianhe/android-bt-remote-ink?label=stars&logo=GitHub)](https://github.com/liuqianhe/android-bt-remote-ink)
 [![GitHub](https://img.shields.io/github/downloads/liuqianhe/android-bt-remote-ink/total?label=GitHub&logo=GitHub)](https://github.com/liuqianhe/android-bt-remote-ink/releases)
 [![license](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
@@ -12,9 +14,7 @@ It is built on top of the original [BT Remote designed for Android TV](https://g
 
 Unlike network remote-control tools, this does not require a companion application on the target. The Android device presents itself as a generic Bluetooth Human Interface Device (HID) and sends HID-compliant keyboard reports, media controls, and mouse input directly over Bluetooth.
 
-[<img height="48" alt="Get it on Google Play" src="https://jqssun.github.io/images/badges/google-play-store.svg">](https://play.google.com/store/apps/details?id=io.github.jqssun.btremote)
-[<img height="48" alt="Get it on F-Droid" src="https://jqssun.github.io/images/badges/fdroid.svg">](https://f-droid.org/packages/io.github.jqssun.btremote)
-[<img height="48" alt="Get it on GitHub" src="https://jqssun.github.io/images/badges/github.svg">](https://github.com/jqssun/android-bt-remote/releases/latest)
+[<img height="48" alt="Download from GitHub Releases" src="https://jqssun.github.io/images/badges/github.svg">](https://github.com/liuqianhe/android-bt-remote-ink/releases/latest)
 
 <video loop src='https://github.com/user-attachments/assets/9bddf132-a861-4693-b408-2539646b7e8b' alt="demo" width="1200" style="display: block; margin: auto;"></video>
 
@@ -74,7 +74,7 @@ Check out the [CI](.github/workflows/apk.yml) for the GitHub Actions release flo
 
 ## Customizations
 
-- E-ink theme: pure white background, black foreground, outlined cards.
+- E-ink theme: default theme, pure white background, black foreground, outlined cards. Light, dark, and system themes are still available.
 - Full-screen numeric keypad: HID Keypad layout, draggable position, normal/ink styles.
 - Full-screen mouse: trackpad, scroll wheel, three buttons, normal/ink styles.
 - Inline bottom navigation: switch between direction pad and mouse from the overflow menu.

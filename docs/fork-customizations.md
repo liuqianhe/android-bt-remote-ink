@@ -159,7 +159,8 @@ Release 证书 SHA-256：
 
 功能：
 
-- 设置中新增“水墨屏（黑白）”主题；
+- 水墨屏是默认主题，新安装或未手动选择主题时自动使用；
+- 设置中新增“水墨屏（黑白）”主题，系统/浅色/深色主题继续保留；
 - 背景纯白 `#FFFFFF`；
 - 文字、图标、主要控件接近纯黑 `#000000`；
 - 不使用动态取色；
@@ -169,6 +170,7 @@ Release 证书 SHA-256：
 实现：
 
 - `ThemeEntity` 新增 `E_INK` 枚举值，设置页的主题列表自动出现该选项；
+- `Constants.kt` 的 `DEFAULT_THEME` 设为 `ThemeEntity.E_INK`；
 - `Color.kt` 增加水墨屏背景/前景/描边颜色；
 - `Theme.kt` 增加 `eInkColorScheme`，并在主题分支中固定为浅色、非动态取色；
 - `Card.kt` 通过 `MaterialTheme.colorScheme.background == Color.White` 判断水墨屏，并给 `ElevatedCard` 加 1dp 黑色描边；
@@ -176,6 +178,7 @@ Release 证书 SHA-256：
 
 主要文件：
 
+- `java/com/atharok/btremote/common/utils/Constants.kt`
 - `java/com/atharok/btremote/domain/entities/settings/ThemeEntity.kt`
 - `java/com/atharok/btremote/ui/theme/Color.kt`
 - `java/com/atharok/btremote/ui/theme/Theme.kt`
