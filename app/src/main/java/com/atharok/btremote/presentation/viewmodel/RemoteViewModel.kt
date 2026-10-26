@@ -23,6 +23,10 @@ class RemoteViewModel(
 
     val remoteSettingsFlow: Flow<RemoteSettings> = useCase.remoteSettingsFlow
 
+    fun saveUseMinimalistRemote(useMinimalistRemote: Boolean) = viewModelScope.launch {
+        useCase.saveUseMinimalistRemote(useMinimalistRemote)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean = useCase.disconnectDevice()

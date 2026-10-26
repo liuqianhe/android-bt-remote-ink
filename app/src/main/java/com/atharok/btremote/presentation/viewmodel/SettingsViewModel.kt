@@ -6,6 +6,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import com.atharok.btremote.domain.usecases.SettingsUseCase
@@ -86,6 +87,14 @@ class SettingsViewModel(
 
     fun saveUseMouseNavigationByDefault(useMouseNavigationByDefault: Boolean) = viewModelScope.launch {
         useCase.saveUseMouseNavigationByDefault(useMouseNavigationByDefault)
+    }
+
+    fun saveShowNavigationToggleInTopBar(showNavigationToggleInTopBar: Boolean) = viewModelScope.launch {
+        useCase.saveShowNavigationToggleInTopBar(showNavigationToggleInTopBar)
+    }
+
+    fun saveTopBarButtonsOrder(order: List<TopBarButton>) = viewModelScope.launch {
+        useCase.saveTopBarButtonsOrder(order)
     }
 
     fun savePhysicalVolumeUpButtonAction(physicalVolumeButtonAction: PhysicalVolumeButtonAction) = viewModelScope.launch {

@@ -71,6 +71,39 @@ fun MoreOverflowMenu(
     )
 }
 
+@Composable
+fun CompactOverflowMenu(
+    icon: ImageVector,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    content: @Composable (closeDropdownMenu: () -> Unit) -> Unit
+) {
+    OverflowMenu(
+        item = {
+            CompactIconButton(
+                onClick = it,
+                icon = icon,
+                contentDescription = contentDescription,
+                modifier = modifier
+            )
+        },
+        content = content
+    )
+}
+
+@Composable
+fun CompactMoreOverflowMenu(
+    modifier: Modifier = Modifier,
+    content: @Composable (closeDropdownMenu: () -> Unit) -> Unit
+) {
+    CompactOverflowMenu(
+        icon = AppIcons.MoreVert,
+        contentDescription = stringResource(id = R.string.more),
+        modifier = modifier,
+        content = content
+    )
+}
+
 // ---- DropdownMenuItem ----
 
 @Composable

@@ -48,14 +48,15 @@ import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonActi
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.virtualKeyboard.VirtualKeyboardLayout
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
+import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.presentation.services.BluetoothHidService
 import com.atharok.btremote.presentation.viewmodel.RemoteViewModel
 import com.atharok.btremote.ui.components.AppScaffold
 import com.atharok.btremote.ui.components.BasicDropdownMenuItem
-import com.atharok.btremote.ui.components.BasicIconButton
+import com.atharok.btremote.ui.components.CompactIconButton
+import com.atharok.btremote.ui.components.CompactMoreOverflowMenu
 import com.atharok.btremote.ui.components.FadeAnimatedContent
 import com.atharok.btremote.ui.components.LoadingDialog
-import com.atharok.btremote.ui.components.MoreOverflowMenu
 import com.atharok.btremote.ui.components.PhysicalVolumeButtonsHandler
 import com.atharok.btremote.ui.theme.surfaceElevationMedium
 import com.atharok.btremote.ui.views.RemoteScreenHelpModalBottomSheet
@@ -134,6 +135,8 @@ fun RemoteScreen(
                 onMouseClick = { isMouseDialogVisible = true },
                 navigationToggle = navigationToggle,
                 onNavigationToggleChanged = { navigationToggle = it },
+                showNavigationToggleInTopBar = remoteSettings.showNavigationToggleInTopBar,
+                topBarButtonsOrder = remoteSettings.topBarButtonsOrder,
                 useAdvancedKeyboardIntegrated = remoteSettings.useAdvancedKeyboard && remoteSettings.useAdvancedKeyboardIntegrated,
                 isKeyboardVisible = isKeyboardVisible,
                 onKeyboardVisibleChanged = { isKeyboardVisible = it },
@@ -141,6 +144,8 @@ fun RemoteScreen(
                 onNumpadVisibleChanged = { isNumpadVisible = it },
                 isMoreButtonsVisible = isMoreButtonsVisible,
                 onMoreButtonsVisibleChanged = { isMoreButtonsVisible = it },
+                useMinimalistRemote = remoteSettings.useMinimalistRemote,
+                onUseMinimalistRemoteChanged = { remoteViewModel.saveUseMinimalistRemote(it) },
                 isHelpBottomSheetVisible = isHelpBottomSheetVisible,
                 onHelpBottomSheetVisibleChanged = { isHelpBottomSheetVisible = it }
             )
@@ -510,6 +515,8 @@ private fun TopBarActions(
     onMouseClick: () -> Unit,
     navigationToggle: NavigationToggle,
     onNavigationToggleChanged: (NavigationToggle) -> Unit,
+    showNavigationToggleInTopBar: Boolean,
+    topBarButtonsOrder: List<TopBarButton>,
     useAdvancedKeyboardIntegrated: Boolean,
     isKeyboardVisible: Boolean,
     onKeyboardVisibleChanged: (Boolean) -> Unit,
@@ -517,53 +524,83 @@ private fun TopBarActions(
     onNumpadVisibleChanged: (Boolean) -> Unit,
     isMoreButtonsVisible: Boolean,
     onMoreButtonsVisibleChanged: (Boolean) -> Unit,
+    useMinimalistRemote: Boolean,
+    onUseMinimalistRemoteChanged: (Boolean) -> Unit,
     isHelpBottomSheetVisible: Boolean,
     onHelpBottomSheetVisibleChanged: (Boolean) -> Unit
 ) {
-    BasicIconButton(
-        onClick = { onNumpadVisibleChanged(!isNumpadVisible) },
-        icon = AppIcons.Numpad,
-        contentDescription = stringResource(id = R.string.numeric_keypad)
-    )
+    // 顺序由“设置 → 顶部功能键顺序调整”决定；“更多”固定在最后
+    topBarButtonsOrder.forEach { topBarButton ->
+        when (topBarButton) {
 
-    BasicIconButton(
-        onClick = onMouseClick,
-        icon = AppIcons.Mouse,
-        contentDescription = stringResource(id = R.string.mouse)
-    )
-
-    if(useAdvancedKeyboardIntegrated) {
-        FadeAnimatedContent(targetState = isKeyboardVisible) {
-            when (it) {
-                true -> {
-                    // Remote
-                    BasicIconButton(
-                        onClick = { onKeyboardVisibleChanged(false) },
-                        icon = AppIcons.RemoteControl,
-                        contentDescription = stringResource(id = R.string.remote)
+            TopBarButton.NAVIGATION_TOGGLE -> {
+                // 方向键 / 鼠标（从“更多”菜单复制出来的快捷切换按钮）
+                if (showNavigationToggleInTopBar) {
+                    CompactIconButton(
+                        onClick = {
+                            onNavigationToggleChanged(
+                                if (navigationToggle == NavigationToggle.MOUSE) NavigationToggle.DIRECTION
+                                else NavigationToggle.MOUSE
+                            )
+                        },
+                        icon = AppIcons.Controller,
+                        contentDescription = stringResource(id = R.string.toggle_navigation_mode)
                     )
                 }
+            }
 
-                false -> {
+            TopBarButton.NUMPAD -> {
+                CompactIconButton(
+                    onClick = { onNumpadVisibleChanged(!isNumpadVisible) },
+                    icon = AppIcons.Numpad,
+                    contentDescription = stringResource(id = R.string.numeric_keypad)
+                )
+            }
+
+            TopBarButton.MOUSE -> {
+                CompactIconButton(
+                    onClick = onMouseClick,
+                    icon = AppIcons.Mouse,
+                    contentDescription = stringResource(id = R.string.mouse)
+                )
+            }
+
+            TopBarButton.KEYBOARD -> {
+                if(useAdvancedKeyboardIntegrated) {
+                    FadeAnimatedContent(targetState = isKeyboardVisible) {
+                        when (it) {
+                            true -> {
+                                // Remote
+                                CompactIconButton(
+                                    onClick = { onKeyboardVisibleChanged(false) },
+                                    icon = AppIcons.RemoteControl,
+                                    contentDescription = stringResource(id = R.string.remote)
+                                )
+                            }
+
+                            false -> {
+                                // Keyboard
+                                CompactIconButton(
+                                    onClick = { onKeyboardVisibleChanged(true) },
+                                    icon = AppIcons.Keyboard,
+                                    contentDescription = stringResource(id = R.string.keyboard)
+                                )
+                            }
+                        }
+                    }
+                } else {
                     // Keyboard
-                    BasicIconButton(
-                        onClick = { onKeyboardVisibleChanged(true) },
+                    CompactIconButton(
+                        onClick = { onKeyboardVisibleChanged(!isKeyboardVisible) },
                         icon = AppIcons.Keyboard,
                         contentDescription = stringResource(id = R.string.keyboard)
                     )
                 }
             }
         }
-    } else {
-        // Keyboard
-        BasicIconButton(
-            onClick = { onKeyboardVisibleChanged(!isKeyboardVisible) },
-            icon = AppIcons.Keyboard,
-            contentDescription = stringResource(id = R.string.keyboard)
-        )
     }
 
-    MoreOverflowMenu { closeDropdownMenu: () -> Unit ->
+    CompactMoreOverflowMenu { closeDropdownMenu: () -> Unit ->
 
         // More Buttons
         BasicDropdownMenuItem(
@@ -572,6 +609,20 @@ private fun TopBarActions(
             onClick = {
                 closeDropdownMenu()
                 onMoreButtonsVisibleChanged(!isMoreButtonsVisible)
+            }
+        )
+
+        // Minimalist remote（对应“设置 → 使用简约的界面”的快捷切换）
+        val minimalistRemoteState = stringResource(
+            id = if (useMinimalistRemote) R.string.toggle_minimalist_remote_state_on
+            else R.string.toggle_minimalist_remote_state_off
+        )
+        BasicDropdownMenuItem(
+            text = stringResource(id = R.string.toggle_minimalist_remote) + minimalistRemoteState,
+            icon = AppIcons.ViewCompact,
+            onClick = {
+                closeDropdownMenu()
+                onUseMinimalistRemoteChanged(!useMinimalistRemote)
             }
         )
 

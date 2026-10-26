@@ -21,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton
@@ -54,11 +56,14 @@ import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguag
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
+import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.presentation.viewmodel.SettingsViewModel
 import com.atharok.btremote.ui.components.AppScaffold
 import com.atharok.btremote.ui.components.FadeAnimatedContent
 import com.atharok.btremote.ui.components.ListDialog
 import com.atharok.btremote.ui.components.NavigateUpIconButton
+import com.atharok.btremote.ui.components.TemplateDialog
+import com.atharok.btremote.ui.components.TextLarge
 import com.atharok.btremote.ui.components.TextNormal
 import com.atharok.btremote.ui.components.TextNormalSecondary
 import org.koin.androidx.compose.koinViewModel
@@ -206,6 +211,20 @@ fun SettingsScreen(
                 secondaryText = null,
                 checked = remoteSettings.useMouseNavigationByDefault,
                 onCheckedChange = { settingsViewModel.saveUseMouseNavigationByDefault(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = horizontalPadding,
+                        vertical = verticalPadding
+                    )
+            )
+
+            // 方向键/触控板 切换图标：在顶部工具栏显示“方向键 / 鼠标”切换按钮
+            SettingsSwitch(
+                primaryText = stringResource(id = R.string.show_navigation_toggle_in_top_bar),
+                secondaryText = null,
+                checked = remoteSettings.showNavigationToggleInTopBar,
+                onCheckedChange = { settingsViewModel.saveShowNavigationToggleInTopBar(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -417,6 +436,25 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            HorizontalDivider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = verticalPadding)
+            )
+
+            // ---- Top Bar Button Order ----
+
+            SettingsTopBarButtonsOrderDialog(
+                order = remoteSettings.topBarButtonsOrder,
+                onOrderChange = { settingsViewModel.saveTopBarButtonsOrder(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = horizontalPadding,
+                        vertical = verticalPadding
+                    )
+            )
 
             HorizontalDivider(
                 modifier = Modifier
@@ -699,6 +737,131 @@ private fun SettingsSwitch(
         Switch(
             checked = checked,
             onCheckedChange = null//onCheckedChange
+        )
+    }
+}
+
+// ---- 顶部功能键顺序调整 ----
+
+@StringRes
+private fun TopBarButton.labelRes(): Int = when (this) {
+    TopBarButton.NAVIGATION_TOGGLE -> R.string.toggle_navigation_mode
+    TopBarButton.NUMPAD -> R.string.numeric_keypad
+    TopBarButton.MOUSE -> R.string.mouse_fullscreen
+    TopBarButton.KEYBOARD -> R.string.keyboard
+}
+
+private fun TopBarButton.iconVector(): ImageVector = when (this) {
+    TopBarButton.NAVIGATION_TOGGLE -> AppIcons.Controller
+    TopBarButton.NUMPAD -> AppIcons.Numpad
+    TopBarButton.MOUSE -> AppIcons.Mouse
+    TopBarButton.KEYBOARD -> AppIcons.Keyboard
+}
+
+@Composable
+private fun SettingsTopBarButtonsOrderDialog(
+    order: List<TopBarButton>,
+    onOrderChange: (List<TopBarButton>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isShowingDialog by remember { mutableStateOf(false) }
+
+    if (isShowingDialog) {
+        // 草稿：弹窗内只改本地顺序，点“确定”才保存
+        var draft by remember { mutableStateOf(order) }
+
+        TemplateDialog(
+            title = {
+                TextLarge(text = stringResource(id = R.string.top_bar_buttons_order))
+            },
+            content = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small))
+                ) {
+                    TextNormalSecondary(
+                        text = stringResource(id = R.string.top_bar_buttons_order_info),
+                        modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.padding_medium))
+                    )
+
+                    draft.forEachIndexed { index, button ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    imageVector = button.iconVector(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(dimensionResource(id = R.dimen.medium_icon_size)),
+                                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                )
+                                TextNormal(text = stringResource(id = button.labelRes()))
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_min)),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        draft = draft.toMutableList().apply {
+                                            add(index - 1, removeAt(index))
+                                        }
+                                    },
+                                    enabled = index > 0
+                                ) {
+                                    Icon(
+                                        imageVector = AppIcons.Up,
+                                        contentDescription = stringResource(id = R.string.up)
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        draft = draft.toMutableList().apply {
+                                            add(index + 1, removeAt(index))
+                                        }
+                                    },
+                                    enabled = index < draft.lastIndex
+                                ) {
+                                    Icon(
+                                        imageVector = AppIcons.Down,
+                                        contentDescription = stringResource(id = R.string.down)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButtonText = stringResource(android.R.string.ok),
+            onConfirmation = {
+                onOrderChange(draft)
+                isShowingDialog = false
+            },
+            dismissButtonText = stringResource(android.R.string.cancel),
+            onDismissRequest = { isShowingDialog = false }
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .clickable { isShowingDialog = true }
+            .then(modifier),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextNormal(text = stringResource(id = R.string.top_bar_buttons_order))
+        Image(
+            imageVector = AppIcons.SwapVert,
+            contentDescription = null,
+            modifier = Modifier.size(dimensionResource(id = R.dimen.medium_icon_size)),
+            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
         )
     }
 }

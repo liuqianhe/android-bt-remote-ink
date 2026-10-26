@@ -15,6 +15,10 @@ class RemoteUseCase(
 
     val remoteSettingsFlow: Flow<RemoteSettings> get() = dataStoreRepository.remoteSettingsFlow
 
+    suspend fun saveUseMinimalistRemote(useMinimalistRemote: Boolean) {
+        dataStoreRepository.saveUseMinimalistRemote(useMinimalistRemote)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean {

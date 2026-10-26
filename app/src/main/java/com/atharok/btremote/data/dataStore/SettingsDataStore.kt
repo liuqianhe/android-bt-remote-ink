@@ -13,6 +13,7 @@ import com.atharok.btremote.common.utils.DEFAULT_MOUSE_SCROLL_SPEED
 import com.atharok.btremote.common.utils.DEFAULT_MOUSE_SPEED
 import com.atharok.btremote.common.utils.DEFAULT_MUST_CLEAR_INPUT_FIELD
 import com.atharok.btremote.common.utils.DEFAULT_REMOTE_NAVIGATION
+import com.atharok.btremote.common.utils.DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR
 import com.atharok.btremote.common.utils.DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION
 import com.atharok.btremote.common.utils.DEFAULT_THEME
 import com.atharok.btremote.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD
@@ -30,6 +31,7 @@ import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguag
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
+import com.atharok.btremote.domain.entities.settings.TopBarButton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -56,6 +58,8 @@ class SettingsDataStore(private val context: Context) {
         private const val REMOTE_NAVIGATION_KEY = "remote_navigation_key"
         private const val USE_ENTER_FOR_SELECTION_KEY = "use_enter_for_selection_key"
         private const val USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY = "use_mouse_navigation_by_default_key"
+        private const val SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY = "show_navigation_toggle_in_top_bar_key"
+        private const val TOP_BAR_BUTTONS_ORDER_KEY = "top_bar_buttons_order_key"
         private const val PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY = "physical_volume_button_up_action_key"
         private const val PHYSICAL_VOLUME_BUTTON_DOWN_ACTION_KEY = "physical_volume_button_down_action_key"
 
@@ -81,6 +85,8 @@ class SettingsDataStore(private val context: Context) {
     private val remoteNavigationKey = stringPreferencesKey(REMOTE_NAVIGATION_KEY)
     private val useEnterForSelectionKey = booleanPreferencesKey(USE_ENTER_FOR_SELECTION_KEY)
     private val useMouseNavigationByDefaultKey = booleanPreferencesKey(USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY)
+    private val showNavigationToggleInTopBarKey = booleanPreferencesKey(SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY)
+    private val topBarButtonsOrderKey = stringPreferencesKey(TOP_BAR_BUTTONS_ORDER_KEY)
     private val physicalVolumeUpButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY)
     private val physicalVolumeDownButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_DOWN_ACTION_KEY)
     private val favoriteDevicesKey = stringPreferencesKey(FAVORITE_DEVICES_KEY)
@@ -169,6 +175,8 @@ class SettingsDataStore(private val context: Context) {
                 useMinimalistRemote = preferences[useMinimalistRemoteKey] ?: DEFAULT_USE_MINIMALIST_REMOTE,
                 useEnterForSelection = preferences[useEnterForSelectionKey] ?: DEFAULT_USE_ENTER_FOR_SELECTION,
                 useMouseNavigationByDefault = preferences[useMouseNavigationByDefaultKey] ?: USE_MOUSE_NAVIGATION_BY_DEFAULT,
+                showNavigationToggleInTopBar = preferences[showNavigationToggleInTopBarKey] ?: DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR,
+                topBarButtonsOrder = TopBarButton.parseOrder(preferences[topBarButtonsOrderKey]),
                 physicalVolumeUpButtonAction = try {
                     PhysicalVolumeButtonAction.valueOf(preferences[physicalVolumeUpButtonActionKey] ?: PhysicalVolumeButtonAction.DEFAULT.name)
                 } catch (_: IllegalArgumentException) {
@@ -257,6 +265,18 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveUseMouseNavigationByDefault(useMouseNavigationByDefault: Boolean) {
         context.dataStore.edit {
             it[useMouseNavigationByDefaultKey] = useMouseNavigationByDefault
+        }
+    }
+
+    suspend fun saveShowNavigationToggleInTopBar(showNavigationToggleInTopBar: Boolean) {
+        context.dataStore.edit {
+            it[showNavigationToggleInTopBarKey] = showNavigationToggleInTopBar
+        }
+    }
+
+    suspend fun saveTopBarButtonsOrder(order: List<TopBarButton>) {
+        context.dataStore.edit {
+            it[topBarButtonsOrderKey] = TopBarButton.serializeOrder(order)
         }
     }
 

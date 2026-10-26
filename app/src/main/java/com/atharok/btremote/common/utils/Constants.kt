@@ -42,6 +42,9 @@ const val DELAY_BETWEEN_KEY_PRESSES_IN_MILLIS = 25L
 
 const val USE_MOUSE_NAVIGATION_BY_DEFAULT = true
 
+// 是否在遥控页顶部工具栏显示“方向键 / 鼠标”切换按钮（设置项名：方向键/触控板 切换图标）
+const val DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR: Boolean = false
+
 // ---- HID Descriptor ----
 
 const val KEYBOARD_REPORT_ID = 0x01

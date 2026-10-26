@@ -98,6 +98,9 @@
     <string name="toggle_navigation_mode">D-pad / Mouse</string>
     <string name="mouse_fullscreen">Full-screen mouse</string>
     <string name="more_buttons">More Buttons</string>
+    <string name="toggle_minimalist_remote">Minimalist remote toggle</string>
+    <string name="toggle_minimalist_remote_state_on"> (On)</string>
+    <string name="toggle_minimalist_remote_state_off"> (Off)</string>
 
     <!-- Widgets -->
     <string name="connect">Connect</string>
@@ -125,6 +128,9 @@
     <string name="user_interface">Interface</string>
     <string name="use_minimalist_interface">Use the minimalist interface</string>
     <string name="use_mouse_navigation_by_default">Use mouse navigation by default</string>
+    <string name="show_navigation_toggle_in_top_bar">D-pad/touchpad toggle icon</string>
+    <string name="top_bar_buttons_order">Top bar button order</string>
+    <string name="top_bar_buttons_order_info">Change the order of the function buttons in the remote screen top bar. \"More\" always stays on the far right.</string>
     <string name="minimalist_interface_info">Does not display the TV channel buttons</string>
     <string name="navigation_mode">Navigation Mode</string>
     <string name="d_pad">D-pad</string>

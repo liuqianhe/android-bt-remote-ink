@@ -70,8 +70,10 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Usb
+import androidx.compose.material.icons.rounded.ViewCompact
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Watch
 import com.atharok.btremote.common.utils.icons.RoundPlayPause
@@ -90,7 +92,7 @@ object AppIcons {
     val Visibility get() = Icons.Rounded.Visibility
     //val Done get() = Icons.Rounded.Done
     val Appearance get() = Icons.Rounded.Palette
-    //val UserInterface get() = Icons.Rounded.ViewCompact
+    val ViewCompact get() = Icons.Rounded.ViewCompact
     val OpenInBrowser get() = Icons.Rounded.OpenInBrowser
     val Lock get() = Icons.Rounded.Lock
     val Key get() = Icons.Rounded.Key
@@ -170,6 +172,10 @@ object AppIcons {
     val KeyboardPageDown get() = Icons.Rounded.KeyboardDoubleArrowDown
 
     val Send get() = Icons.AutoMirrored.Rounded.Send
+
+    // ---- Others ----
+
+    val SwapVert get() = Icons.Rounded.SwapVert
     val Input get() = Icons.AutoMirrored.Rounded.Input
 
     // ---- Mouse ----

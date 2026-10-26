@@ -4,6 +4,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +50,10 @@ interface DataStoreRepository {
     suspend fun saveUseEnterForSelection(useEnterForSelection: Boolean)
 
     suspend fun saveUseMouseNavigationByDefault(useMouseNavigationByDefault: Boolean)
+
+    suspend fun saveShowNavigationToggleInTopBar(showNavigationToggleInTopBar: Boolean)
+
+    suspend fun saveTopBarButtonsOrder(order: List<TopBarButton>)
 
     suspend fun savePhysicalVolumeUpButtonAction(physicalVolumeButtonAction: PhysicalVolumeButtonAction)
 
