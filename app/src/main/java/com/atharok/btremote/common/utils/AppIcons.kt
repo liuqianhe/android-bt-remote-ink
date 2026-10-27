@@ -70,6 +70,7 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Usb
@@ -176,6 +177,7 @@ object AppIcons {
     // ---- Others ----
 
     val SwapVert get() = Icons.Rounded.SwapVert
+    val SwapHoriz get() = Icons.Rounded.SwapHoriz
     val Input get() = Icons.AutoMirrored.Rounded.Input
 
     // ---- Mouse ----

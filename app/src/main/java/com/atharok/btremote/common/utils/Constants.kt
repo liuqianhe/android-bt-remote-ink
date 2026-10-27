@@ -45,6 +45,9 @@ const val USE_MOUSE_NAVIGATION_BY_DEFAULT = true
 // 是否在遥控页顶部工具栏显示“方向键 / 鼠标”切换按钮（设置项名：方向键/触控板 切换图标）
 const val DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR: Boolean = false
 
+// 是否互换主页面两块的左右/上下位置（横屏左右互换，竖屏上下互换）
+const val DEFAULT_SWAP_MAIN_LAYOUT: Boolean = false
+
 // ---- HID Descriptor ----
 
 const val KEYBOARD_REPORT_ID = 0x01

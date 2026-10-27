@@ -7,6 +7,7 @@ import com.atharok.btremote.common.utils.DEFAULT_MUST_CLEAR_INPUT_FIELD
 import com.atharok.btremote.common.utils.DEFAULT_REMOTE_NAVIGATION
 import com.atharok.btremote.common.utils.DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR
 import com.atharok.btremote.common.utils.DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION
+import com.atharok.btremote.common.utils.DEFAULT_SWAP_MAIN_LAYOUT
 import com.atharok.btremote.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD
 import com.atharok.btremote.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD_INTEGRATED
 import com.atharok.btremote.common.utils.DEFAULT_USE_ENTER_FOR_SELECTION
@@ -37,6 +38,7 @@ data class RemoteSettings(
     val useMouseNavigationByDefault: Boolean = USE_MOUSE_NAVIGATION_BY_DEFAULT,
     val showNavigationToggleInTopBar: Boolean = DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR,
     val topBarButtonsOrder: List<TopBarButton> = TopBarButton.DEFAULT_ORDER,
+    val swapMainLayout: Boolean = DEFAULT_SWAP_MAIN_LAYOUT,
     val physicalVolumeUpButtonAction: PhysicalVolumeButtonAction = PhysicalVolumeButtonAction.DEFAULT,
     val physicalVolumeDownButtonAction: PhysicalVolumeButtonAction = PhysicalVolumeButtonAction.DEFAULT
 )

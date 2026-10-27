@@ -77,6 +77,10 @@ class DataStoreRepositoryImpl(
         settingsDataStore.saveUseMinimalistRemote(useMinimalistRemote)
     }
 
+    override suspend fun saveSwapMainLayout(swapMainLayout: Boolean) {
+        settingsDataStore.saveSwapMainLayout(swapMainLayout)
+    }
+
     override suspend fun saveRemoteNavigation(remoteNavigationEntity: RemoteNavigationEntity) {
         settingsDataStore.saveRemoteNavigation(remoteNavigationEntity)
     }

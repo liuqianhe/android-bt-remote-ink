@@ -15,6 +15,7 @@ import com.atharok.btremote.common.utils.DEFAULT_MUST_CLEAR_INPUT_FIELD
 import com.atharok.btremote.common.utils.DEFAULT_REMOTE_NAVIGATION
 import com.atharok.btremote.common.utils.DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR
 import com.atharok.btremote.common.utils.DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION
+import com.atharok.btremote.common.utils.DEFAULT_SWAP_MAIN_LAYOUT
 import com.atharok.btremote.common.utils.DEFAULT_THEME
 import com.atharok.btremote.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD
 import com.atharok.btremote.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD_INTEGRATED
@@ -59,6 +60,8 @@ class SettingsDataStore(private val context: Context) {
         private const val USE_ENTER_FOR_SELECTION_KEY = "use_enter_for_selection_key"
         private const val USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY = "use_mouse_navigation_by_default_key"
         private const val SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY = "show_navigation_toggle_in_top_bar_key"
+        private const val SWAP_MAIN_LAYOUT_KEY = "swap_main_layout_key"
+
         private const val TOP_BAR_BUTTONS_ORDER_KEY = "top_bar_buttons_order_key"
         private const val PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY = "physical_volume_button_up_action_key"
         private const val PHYSICAL_VOLUME_BUTTON_DOWN_ACTION_KEY = "physical_volume_button_down_action_key"
@@ -86,6 +89,7 @@ class SettingsDataStore(private val context: Context) {
     private val useEnterForSelectionKey = booleanPreferencesKey(USE_ENTER_FOR_SELECTION_KEY)
     private val useMouseNavigationByDefaultKey = booleanPreferencesKey(USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY)
     private val showNavigationToggleInTopBarKey = booleanPreferencesKey(SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY)
+    private val swapMainLayoutKey = booleanPreferencesKey(SWAP_MAIN_LAYOUT_KEY)
     private val topBarButtonsOrderKey = stringPreferencesKey(TOP_BAR_BUTTONS_ORDER_KEY)
     private val physicalVolumeUpButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY)
     private val physicalVolumeDownButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_DOWN_ACTION_KEY)
@@ -177,6 +181,7 @@ class SettingsDataStore(private val context: Context) {
                 useMouseNavigationByDefault = preferences[useMouseNavigationByDefaultKey] ?: USE_MOUSE_NAVIGATION_BY_DEFAULT,
                 showNavigationToggleInTopBar = preferences[showNavigationToggleInTopBarKey] ?: DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR,
                 topBarButtonsOrder = TopBarButton.parseOrder(preferences[topBarButtonsOrderKey]),
+                swapMainLayout = preferences[swapMainLayoutKey] ?: DEFAULT_SWAP_MAIN_LAYOUT,
                 physicalVolumeUpButtonAction = try {
                     PhysicalVolumeButtonAction.valueOf(preferences[physicalVolumeUpButtonActionKey] ?: PhysicalVolumeButtonAction.DEFAULT.name)
                 } catch (_: IllegalArgumentException) {
@@ -271,6 +276,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveShowNavigationToggleInTopBar(showNavigationToggleInTopBar: Boolean) {
         context.dataStore.edit {
             it[showNavigationToggleInTopBarKey] = showNavigationToggleInTopBar
+        }
+    }
+
+    suspend fun saveSwapMainLayout(swapMainLayout: Boolean) {
+        context.dataStore.edit {
+            it[swapMainLayoutKey] = swapMainLayout
         }
     }
 

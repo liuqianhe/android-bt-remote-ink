@@ -19,6 +19,10 @@ class RemoteUseCase(
         dataStoreRepository.saveUseMinimalistRemote(useMinimalistRemote)
     }
 
+    suspend fun saveSwapMainLayout(swapMainLayout: Boolean) {
+        dataStoreRepository.saveSwapMainLayout(swapMainLayout)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean {

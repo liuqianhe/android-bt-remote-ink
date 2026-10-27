@@ -45,6 +45,8 @@ interface DataStoreRepository {
 
     suspend fun saveUseMinimalistRemote(useMinimalistRemote: Boolean)
 
+    suspend fun saveSwapMainLayout(swapMainLayout: Boolean)
+
     suspend fun saveRemoteNavigation(remoteNavigationEntity: RemoteNavigationEntity)
 
     suspend fun saveUseEnterForSelection(useEnterForSelection: Boolean)

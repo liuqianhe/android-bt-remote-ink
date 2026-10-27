@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +60,9 @@ import com.atharok.btremote.ui.theme.surfaceElevationHigh
 
 const val NUMPAD_DEFAULT_OFFSET_FRACTION = 0.67f
 private const val NUMPAD_HEIGHT_FRACTION = 0.65f
+
+// 横屏时高度才是瓶颈：宽度按高度成比例收缩，保证键帽接近正方形、不会被压小压扁
+private const val NUMPAD_LANDSCAPE_WIDTH_TO_HEIGHT_RATIO = 0.95f
 
 @Composable
 fun NumpadDialog(
@@ -90,65 +95,97 @@ fun NumpadDialog(
             color = if (useInkStyle) Color.White else MaterialTheme.colorScheme.background,
             contentColor = if (useInkStyle) Color.Black else MaterialTheme.colorScheme.onBackground
         ) {
+            val isLandscapeScreen = with(LocalConfiguration.current) {
+                screenWidthDp > screenHeightDp
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(dimensionResource(id = R.dimen.padding_large)),
+                    .padding(
+                        dimensionResource(
+                            id = if (isLandscapeScreen) R.dimen.padding_medium else R.dimen.padding_large
+                        )
+                    ),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small))
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextMedium(
-                        text = stringResource(id = R.string.numeric_keypad),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    IconButton(onClick = onDismissRequest) {
-                        Icon(
-                            imageVector = AppIcons.Close,
-                            contentDescription = stringResource(id = R.string.close)
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    DialogInkStyleToggle(
-                        inkStyle = useInkStyle,
-                        onInkStyleChange = { useInkStyle = it }
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    if (isAdjusting) {
-                        TextNormal(
-                            text = stringResource(id = R.string.numpad_position_hint),
-                            modifier = Modifier.padding(end = 4.dp),
-                            maxLines = 1
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { isAdjusting = !isAdjusting },
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(
-                                if (isAdjusting) MaterialTheme.colorScheme.primary else Color.Transparent
-                            )
+                if (isLandscapeScreen) {
+                    // 横屏：标题和工具按钮合并成一行，把省下的高度全给键帽
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = AppIcons.Gesture,
-                            contentDescription = stringResource(id = R.string.numpad_adjust_position),
-                            tint = if (isAdjusting) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                LocalContentColor.current
-                            }
+                        TextMedium(
+                            text = stringResource(id = R.string.numeric_keypad),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        DialogInkStyleToggle(
+                            inkStyle = useInkStyle,
+                            onInkStyleChange = { useInkStyle = it }
+                        )
+
+                        if (isAdjusting) {
+                            TextNormal(
+                                text = stringResource(id = R.string.numpad_position_hint),
+                                modifier = Modifier.padding(start = 8.dp, end = 4.dp),
+                                maxLines = 1
+                            )
+                        }
+
+                        NumpadAdjustButton(
+                            isAdjusting = isAdjusting,
+                            onClick = { isAdjusting = !isAdjusting }
+                        )
+
+                        IconButton(onClick = onDismissRequest) {
+                            Icon(
+                                imageVector = AppIcons.Close,
+                                contentDescription = stringResource(id = R.string.close)
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextMedium(
+                            text = stringResource(id = R.string.numeric_keypad),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(onClick = onDismissRequest) {
+                            Icon(
+                                imageVector = AppIcons.Close,
+                                contentDescription = stringResource(id = R.string.close)
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        DialogInkStyleToggle(
+                            inkStyle = useInkStyle,
+                            onInkStyleChange = { useInkStyle = it }
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        if (isAdjusting) {
+                            TextNormal(
+                                text = stringResource(id = R.string.numpad_position_hint),
+                                modifier = Modifier.padding(end = 4.dp),
+                                maxLines = 1
+                            )
+                        }
+
+                        NumpadAdjustButton(
+                            isAdjusting = isAdjusting,
+                            onClick = { isAdjusting = !isAdjusting }
                         )
                     }
                 }
@@ -158,13 +195,26 @@ fun NumpadDialog(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    val keypadHeight = maxHeight * NUMPAD_HEIGHT_FRACTION
+                    // 横屏：可用高度很有限，直接吃满高度，并把宽度按比例收窄居中，
+                    // 让每行键帽都能长到接近正方形；竖屏保持原来的 65% 高度。
+                    val isLandscape = maxWidth > maxHeight
+                    val keypadHeight = if (isLandscape) {
+                        maxHeight
+                    } else {
+                        maxHeight * NUMPAD_HEIGHT_FRACTION
+                    }
+                    val keypadWidth = if (isLandscape) {
+                        minOf(maxWidth, keypadHeight * NUMPAD_LANDSCAPE_WIDTH_TO_HEIGHT_RATIO)
+                    } else {
+                        maxWidth
+                    }
                     val freeSpace = (maxHeight - keypadHeight).coerceAtLeast(0.dp)
                     val keypadTop = freeSpace * offsetFraction.coerceIn(0f, 1f)
 
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .align(Alignment.TopCenter)
+                            .width(keypadWidth)
                             .height(keypadHeight)
                             .offset(y = keypadTop)
                     ) {
@@ -186,6 +236,31 @@ fun NumpadDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NumpadAdjustButton(
+    isAdjusting: Boolean,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(
+                if (isAdjusting) MaterialTheme.colorScheme.primary else Color.Transparent
+            )
+    ) {
+        Icon(
+            imageVector = AppIcons.Gesture,
+            contentDescription = stringResource(id = R.string.numpad_adjust_position),
+            tint = if (isAdjusting) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                LocalContentColor.current
+            }
+        )
     }
 }
 

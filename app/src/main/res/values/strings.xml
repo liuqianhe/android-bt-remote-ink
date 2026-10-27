@@ -99,6 +99,7 @@
     <string name="mouse_fullscreen">Full-screen mouse</string>
     <string name="more_buttons">More Buttons</string>
     <string name="toggle_minimalist_remote">Minimalist remote toggle</string>
+    <string name="swap_main_layout">Swap layout</string>
     <string name="toggle_minimalist_remote_state_on"> (On)</string>
     <string name="toggle_minimalist_remote_state_off"> (Off)</string>
 

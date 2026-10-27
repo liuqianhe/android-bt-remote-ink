@@ -123,9 +123,12 @@ fun RemoteScreen(
         remoteViewModel = remoteViewModel
     )
 
+    val isLandscapeMode = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     StatelessRemoteScreen(
         deviceName = bluetoothDeviceHidConnectionState.deviceName,
-        isLandscapeMode = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+        isLandscapeMode = isLandscapeMode,
+        isLayoutSwapped = remoteSettings.swapMainLayout,
         topBarActions = {
             TopBarActions(
                 navigateToSettings = navigateToSettings,
@@ -133,6 +136,8 @@ fun RemoteScreen(
                     remoteViewModel.disconnectDevice()
                 },
                 onMouseClick = { isMouseDialogVisible = true },
+                isLandscapeMode = isLandscapeMode,
+                onSwapLayout = { remoteViewModel.saveSwapMainLayout(!remoteSettings.swapMainLayout) },
                 navigationToggle = navigationToggle,
                 onNavigationToggleChanged = { navigationToggle = it },
                 showNavigationToggleInTopBar = remoteSettings.showNavigationToggleInTopBar,
@@ -235,6 +240,7 @@ fun RemoteScreen(
 private fun StatelessRemoteScreen(
     deviceName: String,
     isLandscapeMode: Boolean,
+    isLayoutSwapped: Boolean,
     topBarActions: @Composable (RowScope.() -> Unit),
     remoteLayout: @Composable () -> Unit,
     navigationLayout: @Composable () -> Unit,
@@ -252,6 +258,7 @@ private fun StatelessRemoteScreen(
             RemoteLandscapeView(
                 remoteLayout = remoteLayout,
                 navigationLayout = navigationLayout,
+                isLayoutSwapped = isLayoutSwapped,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -260,6 +267,7 @@ private fun StatelessRemoteScreen(
             RemotePortraitView(
                 remoteLayout = remoteLayout,
                 navigationLayout = navigationLayout,
+                isLayoutSwapped = isLayoutSwapped,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -275,6 +283,7 @@ private fun StatelessRemoteScreen(
 private fun RemoteLandscapeView(
     remoteLayout: @Composable () -> Unit,
     navigationLayout: @Composable () -> Unit,
+    isLayoutSwapped: Boolean,
     modifier: Modifier = Modifier
 ) {
     var rowSize by remember { mutableStateOf(Size.Zero) }
@@ -284,24 +293,49 @@ private fun RemoteLandscapeView(
             rowSize = layoutCoordinates.size.toSize() },
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = with(LocalDensity.current) { (0.5f * rowSize.width).toDp() })
-                .align(Alignment.CenterVertically)
-                .padding(
-                    start = dimensionResource(id = R.dimen.padding_large),
-                    top = dimensionResource(id = R.dimen.padding_large),
-                    bottom = dimensionResource(id = R.dimen.padding_large)
-                ),
-        ) {
-            navigationLayout()
-        }
+        if (isLayoutSwapped) {
+            // 互换后：遥控器快捷在左，触控板 / 方向键在右
+            Box(
+                modifier = Modifier
+                    .widthIn(max = with(LocalDensity.current) { (0.5f * rowSize.width).toDp() })
+                    .align(Alignment.CenterVertically),
+                contentAlignment = Alignment.Center
+            ) {
+                remoteLayout()
+            }
 
-        Box(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            contentAlignment = Alignment.Center
-        ) {
-            remoteLayout()
+            NavigationPane(
+                modifier = Modifier
+                    .widthIn(max = with(LocalDensity.current) { (0.5f * rowSize.width).toDp() })
+                    .align(Alignment.CenterVertically)
+                    .padding(
+                        end = dimensionResource(id = R.dimen.padding_large),
+                        top = dimensionResource(id = R.dimen.padding_large),
+                        bottom = dimensionResource(id = R.dimen.padding_large)
+                    )
+            ) {
+                navigationLayout()
+            }
+        } else {
+            NavigationPane(
+                modifier = Modifier
+                    .widthIn(max = with(LocalDensity.current) { (0.5f * rowSize.width).toDp() })
+                    .align(Alignment.CenterVertically)
+                    .padding(
+                        start = dimensionResource(id = R.dimen.padding_large),
+                        top = dimensionResource(id = R.dimen.padding_large),
+                        bottom = dimensionResource(id = R.dimen.padding_large)
+                    )
+            ) {
+                navigationLayout()
+            }
+
+            Box(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                contentAlignment = Alignment.Center
+            ) {
+                remoteLayout()
+            }
         }
     }
 }
@@ -310,39 +344,76 @@ private fun RemoteLandscapeView(
 private fun RemotePortraitView(
     remoteLayout: @Composable () -> Unit,
     navigationLayout: @Composable () -> Unit,
+    isLayoutSwapped: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val maxPaneHeight = with(LocalConfiguration.current) {
+        if (screenHeightDp >= screenWidthDp * 1.9f) // Si la hauteur de l'appareil est suffisamment haute par rapport à sa largeur (ratio ~ 1/2)
+            screenWidthDp.dp // On peut se permettre de prendre pour hauteur la largeur de l'écran
+        else // Sinon
+            (screenHeightDp * 0.50).dp // On prend 50% de la hauteur de l'écran
+    }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .heightIn(
-                    max = with(LocalConfiguration.current) {
-                        if (screenHeightDp >= screenWidthDp * 1.9f) // Si la hauteur de l'appareil est suffisamment haute par rapport à sa largeur (ratio ~ 1/2)
-                            screenWidthDp.dp // On peut se permettre de prendre pour hauteur la largeur de l'écran
-                        else // Sinon
-                            (screenHeightDp * 0.50).dp // On prend 50% de la hauteur de l'écran
-                    }
-                )
-                .align(Alignment.CenterHorizontally),
-        ) {
-            remoteLayout()
-        }
+        if (isLayoutSwapped) {
+            // 互换后：触控板 / 方向键在上，遥控器快捷在下
+            NavigationPane(
+                modifier = Modifier
+                    .heightIn(max = maxPaneHeight)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                navigationLayout()
+            }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(
-                    start = dimensionResource(id = R.dimen.padding_large),
-                    end = dimensionResource(id = R.dimen.padding_large),
-                    bottom = dimensionResource(id = R.dimen.padding_large)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            navigationLayout()
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(
+                        start = dimensionResource(id = R.dimen.padding_large),
+                        end = dimensionResource(id = R.dimen.padding_large),
+                        bottom = dimensionResource(id = R.dimen.padding_large)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                remoteLayout()
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .heightIn(max = maxPaneHeight)
+                    .align(Alignment.CenterHorizontally),
+            ) {
+                remoteLayout()
+            }
+
+            NavigationPane(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(
+                        start = dimensionResource(id = R.dimen.padding_large),
+                        end = dimensionResource(id = R.dimen.padding_large),
+                        bottom = dimensionResource(id = R.dimen.padding_large)
+                    )
+            ) {
+                navigationLayout()
+            }
         }
+    }
+}
+
+/**
+ * 触控板 / 方向键所在区域。
+ */
+@Composable
+private fun NavigationPane(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(modifier = modifier) {
+        content()
     }
 }
 
@@ -513,6 +584,8 @@ private fun TopBarActions(
     navigateToSettings: () -> Unit,
     disconnectDevice: () -> Unit,
     onMouseClick: () -> Unit,
+    isLandscapeMode: Boolean,
+    onSwapLayout: () -> Unit,
     navigationToggle: NavigationToggle,
     onNavigationToggleChanged: (NavigationToggle) -> Unit,
     showNavigationToggleInTopBar: Boolean,
@@ -599,6 +672,13 @@ private fun TopBarActions(
             }
         }
     }
+
+    // 主页面布局互换：横屏左右互换（↔），竖屏上下互换（↕）
+    CompactIconButton(
+        onClick = onSwapLayout,
+        icon = if (isLandscapeMode) AppIcons.SwapHoriz else AppIcons.SwapVert,
+        contentDescription = stringResource(id = R.string.swap_main_layout)
+    )
 
     CompactMoreOverflowMenu { closeDropdownMenu: () -> Unit ->
 

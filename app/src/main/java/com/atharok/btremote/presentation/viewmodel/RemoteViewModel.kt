@@ -27,6 +27,10 @@ class RemoteViewModel(
         useCase.saveUseMinimalistRemote(useMinimalistRemote)
     }
 
+    fun saveSwapMainLayout(swapMainLayout: Boolean) = viewModelScope.launch {
+        useCase.saveSwapMainLayout(swapMainLayout)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean = useCase.disconnectDevice()
