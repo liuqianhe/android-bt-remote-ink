@@ -54,6 +54,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.AppIconStyle
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import com.atharok.btremote.domain.entities.settings.TopBarButton
@@ -456,6 +457,23 @@ fun SettingsScreen(
                     )
             )
 
+            // ---- App Icon ----
+
+            SettingsListDialog(
+                title = R.string.app_icon,
+                dialogMessage = stringResource(id = R.string.app_icon_info),
+                value = remoteSettings.appIconStyle,
+                onValueChange = { settingsViewModel.saveAppIconStyle(it) },
+                items = AppIconStyle.entries,
+                convertValueToString = { context.getString(it.labelRes()) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = horizontalPadding,
+                        vertical = verticalPadding
+                    )
+            )
+
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -756,6 +774,14 @@ private fun TopBarButton.iconVector(): ImageVector = when (this) {
     TopBarButton.NUMPAD -> AppIcons.Numpad
     TopBarButton.MOUSE -> AppIcons.Mouse
     TopBarButton.KEYBOARD -> AppIcons.Keyboard
+}
+
+// ---- 应用图标 ----
+
+@StringRes
+private fun AppIconStyle.labelRes(): Int = when (this) {
+    AppIconStyle.DEFAULT -> R.string.app_icon_style_default
+    AppIconStyle.E_INK -> R.string.app_icon_style_eink
 }
 
 @Composable

@@ -158,7 +158,8 @@ private val viewModelModule: Module = module {
 
     viewModel {
         SettingsViewModel(
-            useCase = get<SettingsUseCase>()
+            useCase = get<SettingsUseCase>(),
+            context = androidContext()
         )
     }
 

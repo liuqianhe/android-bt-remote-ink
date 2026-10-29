@@ -22,11 +22,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.atharok.btremote.common.extensions.getActivity
+import com.atharok.btremote.common.utils.AppIconManager
 import com.atharok.btremote.common.utils.arePermissionsGranted
 import com.atharok.btremote.common.utils.bluetoothConnectPermissions
 import com.atharok.btremote.common.utils.bluetoothScanPermissions
 import com.atharok.btremote.domain.entities.DeviceHidConnectionState
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.presentation.services.BluetoothHidService
 import com.atharok.btremote.presentation.viewmodel.AppScopeViewModel
 import com.atharok.btremote.ui.components.CheckBluetoothStateChanged
@@ -45,6 +47,7 @@ import com.atharok.btremote.ui.screens.SettingsScreen
 import com.atharok.btremote.ui.screens.ThirdLibrariesScreen
 import com.atharok.btremote.ui.theme.BtRemoteTheme
 import com.atharok.btremote.ui.theme.surfaceElevationLow
+import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -58,6 +61,15 @@ fun BtRemoteApp(
 ) {
     val appearance by appScopeViewModel.appearanceSettingsFlow
         .collectAsStateWithLifecycle(AppearanceSettings())
+
+    // 应用启动时把桌面图标同步到设置里选的样式（组件状态与设置不一致时才真正切换）。
+    // 初始值保持 null，等 DataStore 首次真实值到达再同步，避免先按默认值把图标切回去。
+    val remoteSettingsForIcon by appScopeViewModel.remoteSettingsFlow
+        .map<RemoteSettings, RemoteSettings?> { it }
+        .collectAsStateWithLifecycle(initialValue = null)
+    LaunchedEffect(remoteSettingsForIcon?.appIconStyle) {
+        remoteSettingsForIcon?.let { AppIconManager.apply(context, it.appIconStyle) }
+    }
 
     BtRemoteTheme(
         appearance = appearance

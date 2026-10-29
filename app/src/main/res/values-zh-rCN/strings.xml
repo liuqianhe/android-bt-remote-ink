@@ -239,6 +239,10 @@
     <string name="show_navigation_toggle_in_top_bar">方向键/触控板 切换图标</string>
     <string name="top_bar_buttons_order">顶部功能键顺序调整</string>
     <string name="top_bar_buttons_order_info">调整遥控页顶部功能键的先后顺序；“更多”始终固定在最右侧。</string>
+    <string name="app_icon">应用图标</string>
+    <string name="app_icon_info">更换桌面启动图标样式，切换后桌面图标可能需要几秒钟才会刷新。</string>
+    <string name="app_icon_style_default">默认</string>
+    <string name="app_icon_style_eink">水墨屏（黑白）</string>
     <string name="keyboard_tab">Tab</string>
     <string name="play_pause">播放/暂停</string>
     <string name="assign_action_volume_up_button">为音量调高按钮分配操作</string>

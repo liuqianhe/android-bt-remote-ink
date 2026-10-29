@@ -2,6 +2,7 @@ package com.atharok.btremote.common.utils
 
 import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
+import com.atharok.btremote.domain.entities.settings.AppIconStyle
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 
 const val NOTIFICATION_ID = 1
@@ -47,6 +48,9 @@ const val DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR: Boolean = false
 
 // 是否互换主页面两块的左右/上下位置（横屏左右互换，竖屏上下互换）
 const val DEFAULT_SWAP_MAIN_LAYOUT: Boolean = false
+
+// 应用桌面图标样式（默认 / 水墨屏）
+val DEFAULT_APP_ICON_STYLE: AppIconStyle = AppIconStyle.DEFAULT
 
 // ---- HID Descriptor ----
 

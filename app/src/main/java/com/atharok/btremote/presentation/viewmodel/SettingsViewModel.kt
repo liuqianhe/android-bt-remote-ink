@@ -1,11 +1,14 @@
 package com.atharok.btremote.presentation.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atharok.btremote.common.utils.AppIconManager
 import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.AppIconStyle
 import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
@@ -14,7 +17,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val useCase: SettingsUseCase
+    private val useCase: SettingsUseCase,
+    private val context: Context
 ): ViewModel() {
 
     // ---- Appearance ----
@@ -95,6 +99,12 @@ class SettingsViewModel(
 
     fun saveTopBarButtonsOrder(order: List<TopBarButton>) = viewModelScope.launch {
         useCase.saveTopBarButtonsOrder(order)
+    }
+
+    fun saveAppIconStyle(appIconStyle: AppIconStyle) = viewModelScope.launch {
+        // 先落库再切图标：切换 alias 会让部分 ROM 立刻杀掉进程，顺序反了设置会丢
+        useCase.saveAppIconStyle(appIconStyle)
+        AppIconManager.apply(context, appIconStyle)
     }
 
     fun savePhysicalVolumeUpButtonAction(physicalVolumeButtonAction: PhysicalVolumeButtonAction) = viewModelScope.launch {

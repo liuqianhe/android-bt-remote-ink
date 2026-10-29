@@ -132,6 +132,10 @@
     <string name="show_navigation_toggle_in_top_bar">D-pad/touchpad toggle icon</string>
     <string name="top_bar_buttons_order">Top bar button order</string>
     <string name="top_bar_buttons_order_info">Change the order of the function buttons in the remote screen top bar. \"More\" always stays on the far right.</string>
+    <string name="app_icon">App icon</string>
+    <string name="app_icon_info">Change the launcher icon style. The new icon may take a few seconds to appear on the home screen.</string>
+    <string name="app_icon_style_default">Default</string>
+    <string name="app_icon_style_eink">E-ink (black &amp; white)</string>
     <string name="minimalist_interface_info">Does not display the TV channel buttons</string>
     <string name="navigation_mode">Navigation Mode</string>
     <string name="d_pad">D-pad</string>

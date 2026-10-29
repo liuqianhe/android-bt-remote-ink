@@ -30,6 +30,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.AppIconStyle
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import com.atharok.btremote.domain.entities.settings.TopBarButton
@@ -61,6 +62,7 @@ class SettingsDataStore(private val context: Context) {
         private const val USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY = "use_mouse_navigation_by_default_key"
         private const val SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY = "show_navigation_toggle_in_top_bar_key"
         private const val SWAP_MAIN_LAYOUT_KEY = "swap_main_layout_key"
+        private const val APP_ICON_STYLE_KEY = "app_icon_style_key"
 
         private const val TOP_BAR_BUTTONS_ORDER_KEY = "top_bar_buttons_order_key"
         private const val PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY = "physical_volume_button_up_action_key"
@@ -90,6 +92,7 @@ class SettingsDataStore(private val context: Context) {
     private val useMouseNavigationByDefaultKey = booleanPreferencesKey(USE_MOUSE_NAVIGATION_BY_DEFAULT_KEY)
     private val showNavigationToggleInTopBarKey = booleanPreferencesKey(SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR_KEY)
     private val swapMainLayoutKey = booleanPreferencesKey(SWAP_MAIN_LAYOUT_KEY)
+    private val appIconStyleKey = stringPreferencesKey(APP_ICON_STYLE_KEY)
     private val topBarButtonsOrderKey = stringPreferencesKey(TOP_BAR_BUTTONS_ORDER_KEY)
     private val physicalVolumeUpButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_UP_ACTION_KEY)
     private val physicalVolumeDownButtonActionKey = stringPreferencesKey(PHYSICAL_VOLUME_BUTTON_DOWN_ACTION_KEY)
@@ -182,6 +185,7 @@ class SettingsDataStore(private val context: Context) {
                 showNavigationToggleInTopBar = preferences[showNavigationToggleInTopBarKey] ?: DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR,
                 topBarButtonsOrder = TopBarButton.parseOrder(preferences[topBarButtonsOrderKey]),
                 swapMainLayout = preferences[swapMainLayoutKey] ?: DEFAULT_SWAP_MAIN_LAYOUT,
+                appIconStyle = AppIconStyle.parse(preferences[appIconStyleKey]),
                 physicalVolumeUpButtonAction = try {
                     PhysicalVolumeButtonAction.valueOf(preferences[physicalVolumeUpButtonActionKey] ?: PhysicalVolumeButtonAction.DEFAULT.name)
                 } catch (_: IllegalArgumentException) {
@@ -282,6 +286,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveSwapMainLayout(swapMainLayout: Boolean) {
         context.dataStore.edit {
             it[swapMainLayoutKey] = swapMainLayout
+        }
+    }
+
+    suspend fun saveAppIconStyle(appIconStyle: AppIconStyle) {
+        context.dataStore.edit {
+            it[appIconStyleKey] = appIconStyle.name
         }
     }
 

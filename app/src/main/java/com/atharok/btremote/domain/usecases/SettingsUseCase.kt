@@ -4,6 +4,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.AppIconStyle
 import com.atharok.btremote.domain.entities.settings.TopBarButton
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
@@ -92,6 +93,10 @@ class SettingsUseCase(private val dataStoreRepository: DataStoreRepository) {
 
     suspend fun saveTopBarButtonsOrder(order: List<TopBarButton>) {
         dataStoreRepository.saveTopBarButtonsOrder(order)
+    }
+
+    suspend fun saveAppIconStyle(appIconStyle: AppIconStyle) {
+        dataStoreRepository.saveAppIconStyle(appIconStyle)
     }
 
     suspend fun savePhysicalVolumeUpButtonAction(physicalVolumeButtonAction: PhysicalVolumeButtonAction) {

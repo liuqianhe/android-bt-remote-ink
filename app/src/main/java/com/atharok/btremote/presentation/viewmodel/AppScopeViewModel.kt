@@ -3,6 +3,7 @@ package com.atharok.btremote.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import com.atharok.btremote.domain.entities.DeviceHidConnectionState
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.usecases.AppScopeUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,8 @@ class AppScopeViewModel(
     // ---- App Appearance ----
 
     val appearanceSettingsFlow: Flow<AppearanceSettings> = useCase.appearanceSettingsFlow
+
+    val remoteSettingsFlow: Flow<RemoteSettings> = useCase.remoteSettingsFlow
 
     // ---- Local Device Name ----
 

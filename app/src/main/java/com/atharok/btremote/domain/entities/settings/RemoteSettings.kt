@@ -1,6 +1,7 @@
 package com.atharok.btremote.domain.entities.settings
 
 import com.atharok.btremote.common.utils.DEFAULT_KEYBOARD_LANGUAGE
+import com.atharok.btremote.common.utils.DEFAULT_APP_ICON_STYLE
 import com.atharok.btremote.common.utils.DEFAULT_MOUSE_SCROLL_SPEED
 import com.atharok.btremote.common.utils.DEFAULT_MOUSE_SPEED
 import com.atharok.btremote.common.utils.DEFAULT_MUST_CLEAR_INPUT_FIELD
@@ -39,6 +40,7 @@ data class RemoteSettings(
     val showNavigationToggleInTopBar: Boolean = DEFAULT_SHOW_NAVIGATION_TOGGLE_IN_TOP_BAR,
     val topBarButtonsOrder: List<TopBarButton> = TopBarButton.DEFAULT_ORDER,
     val swapMainLayout: Boolean = DEFAULT_SWAP_MAIN_LAYOUT,
+    val appIconStyle: AppIconStyle = DEFAULT_APP_ICON_STYLE,
     val physicalVolumeUpButtonAction: PhysicalVolumeButtonAction = PhysicalVolumeButtonAction.DEFAULT,
     val physicalVolumeDownButtonAction: PhysicalVolumeButtonAction = PhysicalVolumeButtonAction.DEFAULT
 )

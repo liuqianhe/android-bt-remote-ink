@@ -2,6 +2,7 @@ package com.atharok.btremote.domain.usecases
 
 import com.atharok.btremote.domain.entities.DeviceHidConnectionState
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.repositories.BluetoothRepository
 import com.atharok.btremote.domain.repositories.DataStoreRepository
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,8 @@ class AppScopeUseCase(
     // ---- App Appearance ----
 
     val appearanceSettingsFlow: Flow<AppearanceSettings> get() = dataStoreRepository.appearanceSettingsFlow
+
+    val remoteSettingsFlow: Flow<RemoteSettings> get() = dataStoreRepository.remoteSettingsFlow
 
     // ---- Local Device Name ----
 
